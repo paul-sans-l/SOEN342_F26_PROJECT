@@ -1,23 +1,18 @@
 sequenceDiagram
-    actor Patient_or_staff
+    actor Patient_or_staff as Patient or Staff
     participant System
-    participant Schedule
+
     
     Patient_or_staff->>System: Identification(First_Name,Last_Name,Insurance_Number)
-    System -->> Patient_or_staff: LogIn Successful
+    System -->> Patient_or_staff: Successful Indentifictation
     Patient_or_staff->>System: RequestAppointment()
-     System->>Schedule: RequestAvailabilities()
-    Schedule-->>System: Show Date Available
     System ->> Patient_or_staff: ShowDateAvailable()
     Patient_or_staff->>System: RequestAppointment(Date)
-    System->>Schedule: CheckAvailability(Date)
 
     alt Appointment available
-        Schedule-->>System: Available
         System->>System: CreateAppointment(Date)
-        System-->>Patient_or_staff: Confirmed()
+        System-->>Patient_or_staff: Confirmed
     else Appointment unavailable
-        Schedule-->>System: Not available
-        System-->>Patient_or_staff: Rejected()
+        System-->>Patient_or_staff: Date not Available
     end
 
