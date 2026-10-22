@@ -3,3 +3,15 @@
 Kadio Paul-Philippe Ehui - 40269547 (Team Leader) Section H HB
 Luca Nasrallah - 40316548 - Section H HB
 Juan Carlos Bastidas - 40228022 - Section H HC
+
+---
+## Documentation
+
+All supporting documentation for this GitHub repository is stored in the [`docs`](./docs) folder.
+
+The folder includes:
+
+- **System Sequence Diagrams (SSDs)**
+- **UML diagrams**
+- **Use-case models**
+
