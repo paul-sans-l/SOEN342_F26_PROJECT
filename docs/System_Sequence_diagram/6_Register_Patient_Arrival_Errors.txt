@@ -1,0 +1,29 @@
+sequenceDiagram
+    actor Staff as Administrative Staff
+    participant System
+
+    Staff->>System: searchPatient(insuranceNumber)
+
+    alt No patient matches the search criteria
+        System-->>Staff: error: no patient found
+    else One or more patients found
+        System-->>Staff: list of patients (patientId, firstName, lastName, dateOfBirth)
+
+        Staff->>System: selectPatient(patientId)
+
+        alt No appointment scheduled today
+            System-->>Staff: error: no appointment scheduled today
+        else Patient scheduled today
+            System-->>Staff: patient scheduled today (appointmentId, startTime, endTime, status, professional's firstName, lastName)
+
+            Staff->>System: registerArrival(appointmentId)
+
+            alt Appointment does not belong to the selected patient
+                System-->>Staff: error: appointment does not match this patient
+            else status = "Cancelled"
+                System-->>Staff: error: appointment is cancelled
+            else status = "Arrived"
+                System-->>Staff: error: arrival already registered
+            end
+        end
+    end

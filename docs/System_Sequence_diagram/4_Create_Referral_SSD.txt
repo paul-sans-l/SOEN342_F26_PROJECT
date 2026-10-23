@@ -1,0 +1,17 @@
+sequenceDiagram
+    actor Physician as Healthcare professional
+    participant System
+
+    Physician->>System: Createreferral()
+    System-->>Physician: Request referral information
+
+    Physician->>System: Referal(Patient,Physician,Reason ,Priority)
+
+    System->>System: Validate information
+
+    alt Valid referral
+        System->>System: Create referral
+        System-->>Physician: Referral created
+    else Invalid information
+        System-->>Physician: Invalid Information notification
+    end

@@ -1,0 +1,27 @@
+sequenceDiagram
+    actor HP as Healthcare Professional
+    participant System
+
+    HP->>System: startConsultation(appointmentId)
+    System-->>HP: consultation started (consultationId, consultationDate, patient.firstName, patient.lastName, patient.dateOfBirth)
+
+    HP->>System: recordClinicalInformation(observations, diagnosis, treatmentRecommendations, followUpRequirements)
+    System-->>HP: clinical record saved (clinicalRecordId)
+
+    opt Prescription is needed
+        HP->>System: createPrescription()
+        System-->>HP: prescription created (prescriptionId, issueDate)
+
+        loop For each medication
+            HP->>System: addMedication(medicationId)
+            System-->>HP: medication added (medicationId, name)
+        end
+    end
+
+    opt Follow-up is needed
+        HP->>System: requestFollowUpAppointment(startTime, endTime)
+        System-->>HP: follow-up appointment created (appointmentId, startTime, endTime, status = "Confirmed")
+    end
+
+    HP->>System: endConsultation()
+    System-->>HP: consultation completed (consultationId, appointment status = "Completed")
