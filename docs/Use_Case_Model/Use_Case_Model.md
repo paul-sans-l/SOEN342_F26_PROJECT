@@ -57,6 +57,14 @@ A Healthcare Professional conducts and records the consultation associated with 
 
 A Healthcare Professional creates a referral when the patient requires another service, specialist, or provider.
 
+### Fully Dressed Critical Use-Case Specifications
+
+The following three critical use cases are documented using a fully dressed format. Each specification contains a main success scenario and at least one failure extension. Corresponding happy-path and failure-path system sequence diagrams should reflect the interactions described in these scenarios.
+
+- [Book Appointment](./Critical_Use_Case/Use_Case_Book_Appointment.md)
+- [Create Referral](./Critical_Use_Case/Use_Case_Create_Referral.md)
+- [Register Patient Arrival](./Critical_Use_Case/Use_Case_Register_Patient_Arrival.md)
+
 ## Non-Critical Use Cases
 
 The following use cases support the main workflow but are not essential to every appointment:
@@ -108,9 +116,10 @@ The **Validate Referral** use case extends **Book Appointment** when the request
 
 
 ---
+> View inside of github and select Code to view the non-converted version or Access VSCode to view the mermaid text for the Use Case Model
 
 ## Flow Chart Mermaid Code:
-```txt
+```mermaid
 flowchart LR
 
     Patient["Patient"]
