@@ -7,12 +7,11 @@ sequenceDiagram
     System -->> Patient_or_staff: Successful Indentifictation
     Patient_or_staff->>System: RequestAppointment()
     System ->> Patient_or_staff: ShowDateAvailable()
-    Patient_or_staff->>System: RequestAppointment(Date)
+    Patient_or_staff->>System: RequestAppointment(StartTime, EndTime)
 
     alt Appointment available
-        System->>System: CreateAppointment(Date)
+        System->>System: CreateAppointment(StartTime, EndTime)
         System-->>Patient_or_staff: Confirmed
     else Appointment unavailable
         System-->>Patient_or_staff: Date not Available
     end
-
