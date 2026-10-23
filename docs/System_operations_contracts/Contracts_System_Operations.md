@@ -20,7 +20,7 @@ classDiagram
 # Operation Contracts
 
 **Version 1.1.0**
-Based on UML Domain Model v1.1.0 and the SSDs for **1. Book Appointment**, **2. Create Referral**, **4. Register Patient Arrival**, and **5. Conduct Consultation**.
+Based on UML Domain Model v1.1.0 and the SSDs for **1. Book Appointment**,**2. Conduct Consultation**, **4. Create Referral** and **5. Register Patient Arrival**.
 
 
 ---
@@ -53,7 +53,7 @@ Based on UML Domain Model v1.1.0 and the SSDs for **1. Book Appointment**, **2. 
 
 ---
 
-## 2. Create Referral
+## 4. Create Referral
 
 ### System Operation 1: referral(patient, physician, reason, priority)
 
@@ -76,7 +76,7 @@ Based on UML Domain Model v1.1.0 and the SSDs for **1. Book Appointment**, **2. 
 
 ---
 
-## 3. Register Patient Arrival
+## 5. Register Patient Arrival
 
 ### System Operation 1: searchPatient(insuranceNumber)
 
@@ -110,7 +110,7 @@ Based on UML Domain Model v1.1.0 and the SSDs for **1. Book Appointment**, **2. 
 
 ---
 
-## 4. Conduct Consultation
+## 2. Conduct Consultation
 
 ### System Operation 1: startConsultation(appointmentId)
 
