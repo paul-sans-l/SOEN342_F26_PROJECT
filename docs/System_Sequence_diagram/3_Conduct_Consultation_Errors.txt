@@ -1,0 +1,34 @@
+sequenceDiagram
+    actor HP as Healthcare Professional
+    participant System
+
+    HP->>System: startConsultation(appointmentId)
+
+    alt Professional is not assigned to this appointment
+        System-->>HP: error: access denied
+    else status ≠ "Arrived"
+        System-->>HP: error: patient has not arrived
+    else Consultation started
+        System-->>HP: consultation started (consultationId, consultationDate, patient's firstName, lastName, dateOfBirth)
+
+        HP->>System: recordClinicalInformation(observations, diagnosis, treatmentRecommendations, followUpRequirements)
+        System-->>HP: clinical record saved (clinicalRecordId)
+
+        HP->>System: createPrescription()
+        System-->>HP: prescription created (prescriptionId, issueDate)
+
+        HP->>System: addMedication(medicationId)
+        alt Medication does not exist
+            System-->>HP: error: medication not found
+        end
+
+        HP->>System: requestFollowUpAppointment(startTime, endTime)
+        alt Time is outside the professional's schedule
+            System-->>HP: error: professional not available at this time
+        end
+
+        HP->>System: endConsultation()
+        alt Prescription has no medication
+            System-->>HP: error: a prescription must contain at least one medication
+        end
+    end
