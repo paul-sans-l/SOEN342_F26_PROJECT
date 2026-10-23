@@ -1,12 +1,82 @@
+> Note Preview can be done through the Github page when accessing the `docs\System_operations_contracts\System_operations.md` file OR could be read through VSCode using a UML translator and the Markdown in Preview Mode. 
+
+```mermaid
+classDiagram
+    class System {
+        searchPatient(insuranceNumber)
+        selectPatient(patientId)
+        RequestAppointment(StartTime, endTime)
+        startConsultation(appointmentId)
+        addMedication(medicationId)
+        recordClinicalInformation(observations, diagnosis, treatmentRecommendations, followUpRequirements)
+        createPrescription()
+        addMedication(medicationId)
+        referal(Patient,Physician,Reason ,Priority)
+        registerArrival(AppointmentId)
+        requestFollowUpAppointment(startTime, endTime)
+        endConsultation()
+        }
+```
 # Operation Contracts
 
 **Version 1.1.0**
-Based on UML Domain Model v1.1.0 and the successful SSDs for **5. Register Patient Arrival** and **3. Conduct Consultation**.
+Based on UML Domain Model v1.1.0 and the SSDs for **1. Book Appointment**, **2. Create Referral**, **4. Register Patient Arrival**, and **5. Conduct Consultation**.
 
 
 ---
 
-## 5. Register Patient Arrival
+## 1. Book Appointment
+
+### System Operation 1: RequestAppointment(startTime, endTime)
+
+**Preconditions**
+- A `Patient` `p` exists in the system.
+- A `HealthcareProfessional` `hp` exists and has an available `Schedule` for the requested time interval.
+- No other `Appointment` assigned to `hp` overlaps `startTime`–`endTime`.
+
+**Postconditions**
+
+| Postcondition | Type |
+|---|---|
+| An `AppointmentRequest` `ar` was created. | Instance creation |
+| `ar.requestId` was set to a new unique value. | Attribute modification |
+| `ar.requestedAt` became the current date and time. | Attribute modification |
+| `ar.status` became `"Approved"`. | Attribute modification |
+| `ar` was associated with `p`. | Association formed |
+| An `Appointment` `a` was created. | Instance creation |
+| `a.appointmentId` was set to a new unique value. | Attribute modification |
+| `a.startTime` and `a.endTime` became the given values. | Attribute modification |
+| `a.status` became `"Confirmed"`. | Attribute modification |
+| `a` was associated with `ar`. | Association formed |
+| `a` was associated with `p`. | Association formed |
+| `a` was associated with `hp`. | Association formed |
+
+---
+
+## 2. Create Referral
+
+### System Operation 1: referral(patient, physician, reason, priority)
+
+**Preconditions**
+- The healthcare professional creating the referral is logged in.
+- A `Patient` `p` with the provided patient information exists.
+- A `HealthcareProfessional` `hp` with the provided physician information exists.
+- `reason` and `priority` are provided.
+
+**Postconditions**
+
+| Postcondition | Type |
+|---|---|
+| A `Referral` `r` was created. | Instance creation |
+| `r.referralId` was set to a new unique value. | Attribute modification |
+| `r.clinicalReason` and `r.priority` became the given values. | Attribute modification |
+| `r.status` became `"Created"`. | Attribute modification |
+| `r` was associated with `p`. | Association formed |
+| `r` was associated with `hp`. | Association formed |
+
+---
+
+## 3. Register Patient Arrival
 
 ### System Operation 1: searchPatient(insuranceNumber)
 
@@ -40,7 +110,7 @@ Based on UML Domain Model v1.1.0 and the successful SSDs for **5. Register Patie
 
 ---
 
-## 3. Conduct Consultation
+## 4. Conduct Consultation
 
 ### System Operation 1: startConsultation(appointmentId)
 
