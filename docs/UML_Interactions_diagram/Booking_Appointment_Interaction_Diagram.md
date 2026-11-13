@@ -47,3 +47,17 @@ flowchart LR
     UI -->|"5.1: Display operation result"| Staff
 
 ```
+
+2.x: Common initial interactions (patient search and availability checks).
+
+
+
+3.x: Successful booking flow.
+
+
+
+4.x: Waiting-list registration flow.
+
+
+
+5.x: Communicate the final result.
