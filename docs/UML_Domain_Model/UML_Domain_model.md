@@ -1,7 +1,7 @@
 # Medical Appointment Tracking System UML Domain Model
 > Note Preview can be done through the Github page when accessing the `docs/UML_Domain_model.md` file OR could be read through VSCode using a UML translator and the Markdown in Preview Mode. 
 
-**Version 1.1.0**
+**Version 2.0.0 - Iteration II**
 
 ```mermaid
 ---
@@ -65,6 +65,48 @@ direction LR
         ID appointmentId
         DateTime startTime
         DateTime endTime
+        String status
+    }
+
+    class WaitlistEntry {
+        ID waitlistEntryId
+        DateTime requestedAt
+        Date preferredStartDate
+        Date preferredEndDate
+        Integer priority
+        String status
+        DateTime removedAt
+    }
+
+    class AppointmentOffer {
+        ID offerId
+        DateTime offeredAt
+        String channel
+        String outcome
+        DateTime respondedAt
+    }
+
+    class MedicalService {
+        ID serviceId
+        String name
+        String description
+    }
+
+    class Resource {
+        ID resourceId
+        String name
+        String resourceType
+        String status
+    }
+
+    class ResourceRequirement {
+        ID requirementId
+        Integer quantity
+    }
+
+    class ResourceAllocation {
+        ID allocationId
+        DateTime allocatedAt
         String status
     }
 
@@ -136,6 +178,8 @@ direction LR
 
     AppointmentRequest "1" -- "0..1" Appointment : results in
 
+    AppointmentRequest "1" -- "0..1" WaitlistEntry : creates when unavailable
+
 
     %% =========================
     %% Appointments
@@ -144,6 +188,42 @@ direction LR
     Patient "1" -- "0..*" Appointment : has
 
     HealthcareProfessional "1" -- "0..*" Appointment : assigned to
+
+    MedicalService "1" -- "0..*" Appointment : scheduled service
+
+
+    %% =========================
+    %% Waiting Lists
+    %% =========================
+
+    Patient "1" -- "0..*" WaitlistEntry : joins
+
+    HealthcareProfessional "0..1" -- "0..*" WaitlistEntry : preferred professional
+
+    Specialty "0..1" -- "0..*" WaitlistEntry : preferred specialty
+
+    AdministrativeStaff "0..*" -- "0..*" WaitlistEntry : manages priority and removal
+
+    WaitlistEntry "1" -- "0..*" AppointmentOffer : receives
+
+    Schedule "1" -- "0..*" AppointmentOffer : offered slot
+
+    AdministrativeStaff "1" -- "0..*" AppointmentOffer : records phone offer
+
+    AppointmentOffer "0..1" -- "0..1" Appointment : accepted offer creates
+
+
+    %% =========================
+    %% Resource Allocation
+    %% =========================
+
+    MedicalService "1" -- "0..*" ResourceRequirement : defines
+
+    Resource "1" -- "0..*" ResourceRequirement : satisfies
+
+    Appointment "1" -- "0..*" ResourceAllocation : has
+
+    Resource "1" -- "0..*" ResourceAllocation : reserves
 
 
     %% =========================
