@@ -87,11 +87,11 @@ A Patient or member of Administrative Staff cancels an existing appointment, mak
 
 ### Join Waiting List
 
-A Patient requests to be added to the waiting list when no suitable appointment slot is available. The system stores the request and later identifies the patient as a candidate when a slot becomes available.
+A Patient requests placement on the waiting list for a particular healthcare professional, specialty, or date range when no suitable appointment slot is available. The system stores the selected criteria and later uses them to identify the patient when a matching slot becomes available.
 
 ### Offer Appointment
 
-Administrative Staff offer available appointments to eligible patients identified from the waiting list. If the patient accepts, the booking process continues using the standard appointment flow.
+Administrative Staff offer an available appointment to eligible waitlisted patients according to priority If the patient accepts the offer, the standard booking process continues.
 
 ### Manage Waiting List
 
@@ -99,7 +99,7 @@ Administrative Staff review and maintain waiting-list entries, including trackin
 
 ### Update Waiting List Priority
 
-Administrative Staff adjust the priority of patients on the waiting list according to urgency, service type, eligibility, or scheduling requirements.
+Administrative Staff may change the priority of a patient’s waiting-list entry.
 
 ### Identify Eligible Patients
 
@@ -107,7 +107,7 @@ The system identifies patients on the waiting list who are eligible for an appoi
 
 ### Remove Patient from Waiting List
 
-Administrative Staff remove a patient from the waiting list when the patient declines an offer, is no longer eligible, or no longer requires the service.
+If a patient declines an offered appointment, Administrative Staff may choose to remove the patient from the waiting list
 
 ### Issue Prescription
 
@@ -134,11 +134,12 @@ The **Book Appointment** and **Reschedule Appointment** use cases both include *
 - **Book Appointment** `<<include>>` **Check Availability**
 - **Reschedule Appointment** `<<include>>` **Check Availability**
 
-### `<<include>>` — Check Resource Availability
+### `<<extend>>` — Check Resource Availability
 
-The **Check Availability** use case includes **Check Resource Availability** because a valid booking also depends on whether the required staff, room, equipment, or service capacity is available.
+**Check Resource Availability** extends **Check Availability** when the selected medical service requires an examination room, specialized equipment, or a supporting human role.
 
-- **Check Availability** `<<include>>` **Check Resource Availability**
+- **Check Resource Availability** `<<extend>>` **Check Availability**
+- **Extension condition:** The selected medical service requires additional resources.
 
 ### `<<extend>>` — Waiting List
 
@@ -216,16 +217,15 @@ flowchart LR
 
     Book -.->|include| Availability
     Reschedule -.->|include| Availability
-    Availability -.->|include| Resources
+    Resources -.->|extend: service requires resources| Availability
 
     Validate -.->|extend: service requires referral| Book
 
-    JoinWait -.-|extend: no available slots| Book
+    JoinWait -.->|extend: no available slots| Book
 
     Cancel -.->|include| Identify
-    Identify -.->|include| Offer
-    Offer -.->|extend: patient accepts| Book
+    Book -.->|extend: patient accepts offer| Offer
     Remove -.->|extend: patient declines offer| Offer
 
-    ManageWait -.->|include| Priority
+    Priority -.->|extend: staff changes priority| ManageWait
 ```
