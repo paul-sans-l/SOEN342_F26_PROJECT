@@ -15,6 +15,7 @@ The **Patient** uses the system to request and manage appointments. A patient ma
 - Book an appointment.
 - Reschedule an existing appointment.
 - Cancel an appointment.
+- Join a waiting list when no suitable appointment slot is available.
 
 ### Administrative Staff
 
@@ -24,6 +25,9 @@ The **Patient** uses the system to request and manage appointments. A patient ma
 - Register a patient's arrival.
 - Search for a patient record.
 - Reschedule or cancel appointments.
+- Offer appointments to patients on a waiting list.
+- Manage and prioritise waiting-list entries.
+- Remove a patient from a waiting list when appropriate.
 - Generate invoices.
 - Record payments.
 
@@ -81,6 +85,30 @@ A Patient or member of Administrative Staff changes an existing appointment to a
 
 A Patient or member of Administrative Staff cancels an existing appointment, making the reserved time available again.
 
+### Join Waiting List
+
+A Patient requests placement on the waiting list for a particular healthcare professional, specialty, or date range when no suitable appointment slot is available. The system stores the selected criteria and later uses them to identify the patient when a matching slot becomes available.
+
+### Offer Appointment
+
+Administrative Staff offer an available appointment to eligible waitlisted patients according to priority If the patient accepts the offer, the standard booking process continues.
+
+### Manage Waiting List
+
+Administrative Staff review and maintain waiting-list entries, including tracking patient availability, service requirements, and contact status.
+
+### Update Waiting List Priority
+
+Administrative Staff may change the priority of a patient’s waiting-list entry.
+
+### Identify Eligible Patients
+
+The system identifies patients on the waiting list who are eligible for an appointment based on current availability, service requirements, and booking constraints.
+
+### Remove Patient from Waiting List
+
+If a patient declines an offered appointment, Administrative Staff may choose to remove the patient from the waiting list
+
 ### Issue Prescription
 
 A Healthcare Professional records or issues a prescription following a consultation when medication is required.
@@ -106,13 +134,25 @@ The **Book Appointment** and **Reschedule Appointment** use cases both include *
 - **Book Appointment** `<<include>>` **Check Availability**
 - **Reschedule Appointment** `<<include>>` **Check Availability**
 
-### `<<extend>>` — Validate Referral
+### `<<extend>>` — Check Resource Availability
 
+**Check Resource Availability** extends **Check Availability** when the selected medical service requires an examination room, specialized equipment, or a supporting human role.
+
+- **Check Resource Availability** `<<extend>>` **Check Availability**
+- **Extension condition:** The selected medical service requires additional resources.
+
+### `<<extend>>` — Waiting List
+
+The **Join Waiting List** use case extends **Book Appointment** when no suitable appointment slots are available. This is represented with `<<extend>>` because the waiting-list flow is only triggered as a fallback when the standard booking route cannot be completed.
+
+- **Join Waiting List** `<<extend>>` **Book Appointment**
+- **Extension condition:** No suitable slot is currently available.
+
+### `<<extend>>` — Validate Referral
 The **Validate Referral** use case extends **Book Appointment** when the requested service requires a referral. This is represented with `<<extend>>` because referral validation is conditional rather than part of every booking. If the selected service does not require a referral, the booking process continues without this additional behaviour.
 
 - **Validate Referral** `<<extend>>` **Book Appointment**
 - **Extension condition:** The requested service requires a referral.
-
 
 
 ---
@@ -142,11 +182,20 @@ flowchart LR
 
         Availability(["Check Availability"])
         Validate(["Validate Referral"])
+        Resources(["Check Resource Availability"])
+
+        JoinWait(["Join Waiting List"])
+        Offer(["Offer Appointment"])
+        ManageWait(["Manage Waiting List"])
+        Priority(["Update Waiting List Priority"])
+        Identify(["Identify Eligible Patients"])
+        Remove(["Remove Patient from Waiting List"])
     end
 
     Patient --- Book
     Patient --- Reschedule
     Patient --- Cancel
+    Patient --- JoinWait
 
     Staff --- Book
     Staff --- Arrival
@@ -155,6 +204,10 @@ flowchart LR
     Staff --- Cancel
     Staff --- Invoice
     Staff --- Payment
+    Staff --- Offer
+    Staff --- ManageWait
+    Staff --- Priority
+    Staff --- Remove
 
     HCP --- Consult
     HCP --- Referral
@@ -164,6 +217,15 @@ flowchart LR
 
     Book -.->|include| Availability
     Reschedule -.->|include| Availability
+    Resources -.->|extend: service requires resources| Availability
 
     Validate -.->|extend: service requires referral| Book
+
+    JoinWait -.->|extend: no available slots| Book
+
+    Cancel -.->|include| Identify
+    Book -.->|extend: patient accepts offer| Offer
+    Remove -.->|extend: patient declines offer| Offer
+
+    Priority -.->|extend: staff changes priority| ManageWait
 ```
