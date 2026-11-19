@@ -14,7 +14,7 @@ The folder includes:
 - **System Sequence Diagrams (SSDs) [`System_Sequence_Diagrams`](docs/System_Sequence_diagram)** 
 - **UML diagrams [`UML_Domain_Model`](./docs/UML_Domain_Model/)**
 - **Use-case models [`Use_Case_Model`](./docs/Use_Case_Model/)**
-    - The Use-Case Model contains the overall use cases for the three actors: Patient, Administrative Staff, and Healthcare Professional. See [`Use_Case_Model.md`](./docs/Use_Case_Model/Use_Case_Model.md) or [`Use_Case_Diagram.png`](./docs/Use_Case_Model/Use_Case_Diagram.png).
+    - The [use-case diagram](./docs/Use_Case_Model/Use_Case_Model.md#use-case-diagram) shows the critical and non-critical use cases for patients, administrative staff, and healthcare professionals.
     - The three fully dressed critical use cases each contain a main success scenario and failure extensions:
         * [`Use_Case_Book_Appointment.md`](./docs/Use_Case_Model/Critical_Use_Case/Use_Case_Book_Appointment.md)
         * [`Use_Case_Create_Referral.md`](./docs/Use_Case_Model/Critical_Use_Case/Use_Case_Create_Referral.md)
