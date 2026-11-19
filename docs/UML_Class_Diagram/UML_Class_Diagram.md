@@ -1,9 +1,19 @@
-> Note Preview can be done through the Github page file OR could be read through VSCode using a UML translator and the Markdown in Preview Mode. 
+# Partial UML Class Diagram
+
+## Domain classes and associations
 
 ```mermaid
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+  class:
+    hideEmptyMembersBox: true
+---
 
 classDiagram
-direction LR
+direction TB
 
 %% =========================
 %% DOMAIN OBJECTS
@@ -159,8 +169,71 @@ class Payment {
 }
 
 %% =========================
-%% EXPERT CLASSES
+%% DOMAIN RELATIONSHIPS
 %% =========================
+
+HealthcareProfessional "0..*" -- "0..*" Specialty
+HealthcareProfessional "1" -- "0..*" Schedule
+HealthcareProfessional "0..*" -- "1..*" ClinicLocation
+ClinicLocation "1" -- "0..*" Schedule
+AdministrativeStaff "0..*" -- "1..*" ClinicLocation
+
+Patient "1" -- "0..*" AppointmentRequest
+AdministrativeStaff "0..1" -- "0..*" AppointmentRequest
+AppointmentRequest "1" -- "0..1" Appointment
+
+Patient "1" -- "0..*" Appointment
+HealthcareProfessional "1" -- "0..*" Appointment
+MedicalService "1" -- "0..*" Appointment
+
+Patient "1" -- "0..*" WaitlistEntry
+HealthcareProfessional "0..1" -- "0..*" WaitlistEntry
+Specialty "0..1" -- "0..*" WaitlistEntry
+AdministrativeStaff "0..*" -- "0..*" WaitlistEntry
+WaitlistEntry "1" -- "0..*" AppointmentOffer
+Schedule "1" -- "0..*" AppointmentOffer
+AdministrativeStaff "1" -- "0..*" AppointmentOffer
+AppointmentOffer "0..1" -- "0..1" Appointment
+
+MedicalService "0..*" -- "0..*" Resource
+
+Appointment "1" -- "0..1" Consultation
+HealthcareProfessional "1" -- "0..*" Consultation
+Patient "1" -- "0..*" Consultation
+Consultation "1" -- "0..1" ClinicalRecord
+
+Patient "1" -- "0..*" Referral
+HealthcareProfessional "1" -- "0..*" Referral
+Specialty "0..1" -- "0..*" Referral
+Referral "0..1" -- "0..*" Appointment
+
+Consultation "1" -- "0..*" Prescription
+HealthcareProfessional "1" -- "0..*" Prescription
+Patient "1" -- "0..*" Prescription
+Prescription "0..*" -- "1..*" Medication
+
+Consultation "1" -- "0..*" FollowUpRequest
+
+Patient "1" -- "0..*" Invoice
+Invoice "1" -- "0..*" Payment
+```
+
+## Design classes and dependencies
+
+Domain class names in this view refer to the classes above.
+
+```mermaid
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+  class:
+    hideEmptyMembersBox: true
+---
+
+classDiagram
+direction LR
 
 class BookingInterface {
     <<Boundary>>
@@ -227,55 +300,6 @@ class ReferralService {
     +createReferral()
     +validateReferralInformation()
 }
-
-%% =========================
-%% DOMAIN RELATIONSHIPS
-%% =========================
-
-HealthcareProfessional "0..*" -- "0..*" Specialty
-HealthcareProfessional "1" -- "0..*" Schedule
-HealthcareProfessional "0..*" -- "1..*" ClinicLocation
-ClinicLocation "1" -- "0..*" Schedule
-AdministrativeStaff "0..*" -- "1..*" ClinicLocation
-
-Patient "1" -- "0..*" AppointmentRequest
-AdministrativeStaff "0..1" -- "0..*" AppointmentRequest
-AppointmentRequest "1" -- "0..1" Appointment
-
-Patient "1" -- "0..*" Appointment
-HealthcareProfessional "1" -- "0..*" Appointment
-MedicalService "1" -- "0..*" Appointment
-
-Patient "1" -- "0..*" WaitlistEntry
-HealthcareProfessional "0..1" -- "0..*" WaitlistEntry
-Specialty "0..1" -- "0..*" WaitlistEntry
-AdministrativeStaff "0..*" -- "0..*" WaitlistEntry
-WaitlistEntry "1" -- "0..*" AppointmentOffer
-Schedule "1" -- "0..*" AppointmentOffer
-AdministrativeStaff "1" -- "0..*" AppointmentOffer
-AppointmentOffer "0..1" -- "0..1" Appointment
-
-MedicalService "0..*" -- "0..*" Resource
-
-Appointment "1" -- "0..1" Consultation
-HealthcareProfessional "1" -- "0..*" Consultation
-Patient "1" -- "0..*" Consultation
-Consultation "1" -- "0..1" ClinicalRecord
-
-Patient "1" -- "0..*" Referral
-HealthcareProfessional "1" -- "0..*" Referral
-Specialty "0..1" -- "0..*" Referral
-Referral "0..1" -- "0..*" Appointment
-
-Consultation "1" -- "0..*" Prescription
-HealthcareProfessional "1" -- "0..*" Prescription
-Patient "1" -- "0..*" Prescription
-Prescription "0..*" -- "1..*" Medication
-
-Consultation "1" -- "0..*" FollowUpRequest
-
-Patient "1" -- "0..*" Invoice
-Invoice "1" -- "0..*" Payment
 
 %% =========================
 %% EXPERT RESPONSIBILITIES
