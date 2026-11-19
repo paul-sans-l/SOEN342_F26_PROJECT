@@ -1,3 +1,6 @@
+# Create Referral
+
+```mermaid
 sequenceDiagram
     actor Physician as Healthcare professional
     participant System
@@ -15,3 +18,4 @@ sequenceDiagram
     else Invalid information
         System-->>Physician: Invalid Information notification
     end
+```

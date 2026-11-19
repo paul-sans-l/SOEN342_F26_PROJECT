@@ -1,3 +1,6 @@
+# Register Patient Arrival (Success)
+
+```mermaid
 sequenceDiagram
     actor Staff as Administrative Staff
     participant System
@@ -12,3 +15,4 @@ sequenceDiagram
 
     Staff->>System: registerArrival(appointmentId)
     System-->>Staff: arrival confirmed (appointmentId, status = "Arrived")
+```
