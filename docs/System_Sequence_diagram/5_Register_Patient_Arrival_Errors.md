@@ -1,3 +1,6 @@
+# Register Patient Arrival (Errors)
+
+```mermaid
 sequenceDiagram
     actor Staff as Administrative Staff
     participant System
@@ -27,3 +30,4 @@ sequenceDiagram
             end
         end
     end
+```

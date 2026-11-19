@@ -1,3 +1,6 @@
+# Book Appointment
+
+```mermaid
 sequenceDiagram
     actor Patient_or_staff as Patient or Staff
     participant System
@@ -15,3 +18,4 @@ sequenceDiagram
     else Appointment unavailable
         System-->>Patient_or_staff: Date not Available
     end
+```
