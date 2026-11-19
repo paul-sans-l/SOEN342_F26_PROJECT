@@ -1,5 +1,7 @@
 # Partial UML Class Diagram
 
+Both views describe the same partial design. The first shows the domain classes and their associations. The second shows how the interfaces, controllers, and services use those classes. Showing these relationships in two views makes the connectors easier to follow.
+
 ## Domain classes and associations
 
 ```mermaid
@@ -147,13 +149,6 @@ class Medication {
     String name
 }
 
-class FollowUpRequest {
-    <<Object>>
-    ID requestId
-    DateTime requestedAt
-    String status
-}
-
 class Invoice {
     <<Object>>
     ID invoiceId
@@ -212,15 +207,14 @@ HealthcareProfessional "1" -- "0..*" Prescription
 Patient "1" -- "0..*" Prescription
 Prescription "0..*" -- "1..*" Medication
 
-Consultation "1" -- "0..*" FollowUpRequest
-
 Patient "1" -- "0..*" Invoice
 Invoice "1" -- "0..*" Payment
 ```
 
 ## Design classes and dependencies
 
-Domain class names in this view refer to the classes above.
+Consultation follow-ups use an approved `AppointmentRequest` linked to a confirmed `Appointment`.
+Resource reservation design is scheduled for Iteration III.
 
 ```mermaid
 ---
@@ -237,21 +231,22 @@ direction LR
 
 class BookingInterface {
     <<Boundary>>
-    +requestAppointment()
+    +requestAppointment(startTime, endTime)
+    +requestAppointmentForPatient(patientId, startTime, endTime)
     +displayOperationResult()
 }
 
 class AppointmentController {
     <<Controller>>
-    +submitBookingRequest()
+    +requestAppointment(patientId, startTime, endTime)
     +cancelAppointment()
     +registerArrival()
 }
 
 class PatientRepository {
     <<Expert>>
-    +identifyPatient()
-    +searchPatient()
+    +identifyPatient(patientId)
+    +searchPatient(insuranceNumber)
     +getPatientAppointments()
 }
 
@@ -270,14 +265,14 @@ class HealthcareProfessionalSchedule {
     +selectProfessional()
 }
 
-class Resources {
+class ResourceService {
     <<Expert>>
-    +checkResourceAvailability()
+    +checkRequiredResources(startTime, endTime)
 }
 
 class WaitingListService {
     <<Expert>>
-    +joinWaitingList()
+    +registerOnWaitlist(patient, criteria)
     +listEligiblePatients()
     +offerAppointment()
     +acceptOffer()
@@ -285,20 +280,55 @@ class WaitingListService {
     +removeFromWaitingList()
 }
 
+class ConsultationInterface {
+    <<Boundary>>
+    +startConsultation(appointmentId)
+    +recordClinicalInformation(details)
+    +createPrescription()
+    +addMedication(medicationId)
+    +requestFollowUpAppointment(startTime, endTime)
+    +endConsultation()
+}
+
+class ConsultationController {
+    <<Controller>>
+    +startConsultation(appointmentId, professional)
+    +recordClinicalInformation(details)
+    +createPrescription()
+    +addMedication(medicationId)
+    +requestFollowUpAppointment(startTime, endTime)
+    +endConsultation()
+}
+
 class ConsultationService {
     <<Expert>>
-    +startConsultation()
-    +recordClinicalInformation()
+    +startConsultation(appointmentId, professional)
+    +recordClinicalInformation(details)
     +createPrescription()
-    +addMedication()
-    +requestFollowUp()
+    +addMedication(medicationId)
+    +requestFollowUpAppointment(startTime, endTime)
     +endConsultation()
+}
+
+class ReferralInterface {
+    <<Boundary>>
+    +searchPatient(insuranceNumber)
+    +selectPatient(patientId)
+    +createReferral(clinicalReason, priority, specialtyId)
+}
+
+class ReferralController {
+    <<Controller>>
+    +searchPatient(insuranceNumber)
+    +selectPatient(patientId)
+    +createReferral(clinicalReason, priority, specialtyId, professional)
+    -validateReferralInformation(clinicalReason, priority)
 }
 
 class ReferralService {
     <<Expert>>
-    +createReferral()
-    +validateReferralInformation()
+    +createReferral(patient, professional, specialtyId, clinicalReason, priority)
+    +validateReferralInformation(clinicalReason, priority)
 }
 
 %% =========================
@@ -310,7 +340,7 @@ BookingInterface --> AppointmentController : submits requests
 AppointmentController ..> PatientRepository : uses
 AppointmentController ..> AppointmentService : uses
 AppointmentController ..> HealthcareProfessionalSchedule : uses
-AppointmentController ..> Resources : uses
+AppointmentController ..> ResourceService : uses
 AppointmentController ..> WaitingListService : uses
 
 PatientRepository ..> Patient : manages
@@ -324,20 +354,27 @@ HealthcareProfessionalSchedule ..> Schedule : manages
 HealthcareProfessionalSchedule ..> Specialty : accesses
 HealthcareProfessionalSchedule ..> ClinicLocation : accesses
 
-Resources ..> Resource : manages
-Resources ..> MedicalService : checks
+ResourceService ..> Resource : checks availability
+ResourceService ..> MedicalService : checks requirements
 
 WaitingListService ..> WaitlistEntry : manages
 WaitingListService ..> AppointmentOffer : manages
 WaitingListService ..> HealthcareProfessionalSchedule : uses
 WaitingListService ..> AppointmentService : uses
 
+ConsultationInterface --> ConsultationController : submits requests
+ConsultationController ..> ConsultationService : uses
+ConsultationService ..> Appointment : verifies and completes
 ConsultationService ..> Consultation : manages
 ConsultationService ..> ClinicalRecord : manages
 ConsultationService ..> Prescription : manages
 ConsultationService ..> Medication : accesses
-ConsultationService ..> FollowUpRequest : manages
+ConsultationService ..> HealthcareProfessionalSchedule : checks follow-up availability
+ConsultationService ..> AppointmentService : books follow-ups
 
+ReferralInterface --> ReferralController : submits requests
+ReferralController ..> PatientRepository : looks up patients
+ReferralController ..> ReferralService : uses
 ReferralService ..> Referral : manages
 ReferralService ..> Patient : accesses
 ReferralService ..> HealthcareProfessional : accesses
