@@ -240,7 +240,7 @@ class AppointmentController {
     <<Controller>>
     +requestAppointment(patientId, startTime, endTime)
     +cancelAppointment()
-    +registerArrival()
+    +registerArrival(appointmentId)
 }
 
 class PatientRepository {
