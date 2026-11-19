@@ -9,5 +9,6 @@ public record Appointment(
         String status,
         Patient patient,
         HealthcareProfessional professional,
+        ClinicLocation location,
         MedicalService medicalService,
         AppointmentRequest request) {}

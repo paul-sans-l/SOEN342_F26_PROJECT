@@ -34,13 +34,38 @@ To suggest a different file for **Import availability**, pass its path when laun
 .\run-poc.ps1 -AvailabilityCsv 'C:\path\to\availability.csv'
 ```
 
-1. Load the clinic, patient, and medical service data with options 1–3. Press Enter at each path prompt to use the examples in `data/`. The patient examples come from the handout. The clinic and medical service are demo records.
-2. Select option 4 and press Enter to import the suggested availability CSV, or type another path. For the handout's seven-column file, accept clinic ID `1` after loading the demo clinic.
-3. Use **Make availability** to create future intervals for a professional. Weekly recurrence accepts selected weekdays. Monthly recurrence uses a day of the month and skips months without that day. The handout's original availability dates are retained for import.
-4. Search by professional or specialty. To book for a walk-in or phone caller, use option 7 to identify the patient and select a returned schedule ID and a service ID. The appointment reserves the entire selected interval.
-5. Use option 8 to save all stored schedules to a CSV. Enter a new path to save a copy or enter your working CSV's path to replace it with the export. The export includes a `Location ID` column, so it can be imported again after loading the matching clinic CSV.
+### Run the automated walkthrough
 
-Each run starts with empty in-memory data. Choosing a file at launch sets the suggested import path. The console reads it when you choose import and writes availability when you choose export. Confirmed appointments are stored in memory for the current run. The demo service has no additional resource requirements. Services marked as requiring resources return the unavailable-resource outcome while reservation design is deferred.
+```powershell
+.\run-poc.ps1 -Demo
+```
+
+The demo starts with empty in-memory data and prints the whole console session. It uses November 1, 2026 in Toronto as a fixed test date so the handout's November availability can be searched and booked. The menu repeats after each action. Follow each `Choice:` line to see what runs next. A blank answer accepts the default shown in brackets.
+
+### What the demo output means
+
+Options **1, 4, 5, 6, and 7** cover the five PoC requirements. Options **2 and 3** let staff inspect the data and check what happened after booking.
+
+| What you see | What happened |
+| --- | --- |
+| **Choice 1 — Import availability** | The demo accepts the handout CSV and the sample supporting files. It loads **1 clinic, 4 patients, and 1 medical service**, then imports **8 schedule intervals** into Demo Clinic. The availability CSV also supplies the professionals and specialties. |
+| **Choice 2 — View clinic locations** | `1 \| Demo Clinic \| 1 Demo Avenue` shows the clinic's ID, name, and address. The demo uses clinic ID `1` when creating availability. |
+| **Choice 3 — View patients and their appointments** | The four patients are loaded. Each shows `No appointments reserved` because no booking has been made in this run yet. |
+| **Choice 4 — Make availability** | The demo selects **Amélie Tremblay** at Demo Clinic and asks for Mondays from **09:00 to 12:00** between November 9 and 16. Both Mondays match, so the system creates **schedule `9` on November 9** and **schedule `10` on November 16**. |
+| **Choice 5 — Search availability** | The demo searches **Family Medicine** from November 2 through 16. It finds four free intervals: `1` and `2` from the imported CSV, plus `9` and `10` from the recurring availability. The `T` in `2026-11-09T09:00` separates the date from the time. |
+| **Choice 6 — Book an appointment** | The app identifies **Émilie Lavoie** as patient `1` and books schedule `9` for service `1`, **General Consultation**. `Confirmed \| appointment 1` means the entire **09:00–12:00** interval is reserved. Schedule `9` identifies the time slot. Appointment `1` identifies the booking. |
+| **Choice 3 again — Check the reservation** | Émilie now has a confirmed appointment showing the **date, time, clinic, professional, and service**. The other three patients still have no reservations. |
+| **Choice 7 — Export availability** | The app writes **10 schedule rows** to a temporary CSV, including the 8 imported rows and the 2 it created. The path appears on the `Demo export` line at the end. The export includes all stored schedule intervals. Appointment status stays in memory for the current run. |
+| **Choice 5 again — Check the booked slot** | The demo searches for Amélie on **November 9 only**. `No availability found` is expected because her only interval on that date is booked. |
+| **Choice 0 — Exit** | `PASS` means all seven choices produced the expected results, the appointment appeared under the right patient, the booked slot disappeared from search, and the export contained the expected rows. |
+
+Some Windows terminals may display accented names incorrectly when decoding the console output. The exported CSV uses UTF-8 and preserves the names.
+
+### Use the interactive menu
+
+An interactive run starts empty and uses today's date. On the first import, accept the sample supporting CSVs or type `custom` to select your own clinic, patient, and service files. Later imports reuse those records. Use option 4 to create future intervals when the handout's dates are in the past. Weekly recurrence accepts selected weekdays. Monthly recurrence uses a day of the month and skips months without that day.
+
+Use option 7 with a new path to save a copy, or enter the path of your working CSV to replace it. The export includes a `Location ID` column for reimport with the matching clinic CSV. The demo service has no additional resource requirements. Services that require resources return the unavailable-resource outcome while reservation design is deferred.
 
 ## Repository tree
 
@@ -70,24 +95,27 @@ The Phase II additions in `src/` and `data/` run the PoC. The documents in `docs
 │           ├── Use_Case_Book_Appointment.md
 │           ├── Use_Case_Create_Referral.md
 │           └── Use_Case_Register_Patient_Arrival.md
-├── run-poc.ps1                                      # Compiles and launches the console
-└── src/
-    └── soen342/                                     # Java source for the Iteration II PoC
-        ├── Main.java                                # Console entry point and menu
-        ├── BookingInterface.java                    # Patient identification and booking boundary
-        ├── AppointmentController.java               # Resolves patient, schedule, and service for booking
-        ├── AppointmentService.java                  # Rechecks availability and records the appointment
-        ├── PatientRepository.java                   # Loads and identifies patients
-        ├── HealthcareProfessionalSchedule.java      # Creates, searches, imports, and exports schedules
-        ├── RepetitionPattern.java                   # Weekly and monthly availability patterns
-        ├── Csv.java                                 # Reads and writes UTF-8 CSV files
-        ├── Appointment.java                         # Confirmed booking for the selected interval
-        ├── AppointmentRequest.java                  # Request linked to the confirmed appointment
-        ├── ClinicLocation.java                      # Clinic hosting a schedule
-        ├── HealthcareProfessional.java              # Provider, specialties, and practice locations
-        ├── MedicalService.java                      # Service selected when booking
-        ├── Patient.java                             # Patient identity and contact details
-        ├── Schedule.java                            # One bookable interval
-        └── Specialty.java                           # Specialty used in availability searches
+├── run-poc.ps1                                      # Launches the console or runs the demo
+├── src/
+│   └── soen342/                                     # Java source for the Iteration II PoC
+│       ├── Main.java                                # Console entry point and menu
+│       ├── BookingInterface.java                    # Patient identification and booking boundary
+│       ├── AppointmentController.java               # Resolves patient, schedule, and service for booking
+│       ├── AppointmentService.java                  # Rechecks availability and records the appointment
+│       ├── PatientRepository.java                   # Loads and identifies patients
+│       ├── HealthcareProfessionalSchedule.java      # Creates, searches, imports, and exports schedules
+│       ├── RepetitionPattern.java                   # Weekly and monthly availability patterns
+│       ├── Csv.java                                 # Reads and writes UTF-8 CSV files
+│       ├── Appointment.java                         # Confirmed booking for the selected interval
+│       ├── AppointmentRequest.java                  # Request linked to the confirmed appointment
+│       ├── ClinicLocation.java                      # Clinic hosting a schedule
+│       ├── HealthcareProfessional.java              # Provider, specialties, and practice locations
+│       ├── MedicalService.java                      # Service selected when booking
+│       ├── Patient.java                             # Patient identity and contact details
+│       ├── Schedule.java                            # One bookable interval
+│       └── Specialty.java                           # Specialty used in availability searches
+└── tests/
+    └── soen342/
+        └── PocDemo.java                             # Exercises all seven options and verifies the export
 ```
 

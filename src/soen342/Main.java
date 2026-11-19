@@ -18,21 +18,30 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 public final class Main {
+    private static final class Session {
+        final PatientRepository patients = new PatientRepository();
+        final AppointmentService appointments;
+        final HealthcareProfessionalSchedule availability;
+        final BookingInterface booking;
+
+        Session(Clock clock) {
+            appointments = new AppointmentService(clock);
+            availability = new HealthcareProfessionalSchedule(clock, appointments);
+            booking = new BookingInterface(new AppointmentController(patients, availability, appointments));
+        }
+    }
+
     private final BufferedReader input;
     private final PrintStream output;
+    private final Clock clock;
     private final Path defaultAvailabilityCsv;
-    private final PatientRepository patients = new PatientRepository();
-    private final AppointmentService appointments;
-    private final HealthcareProfessionalSchedule availability;
-    private final BookingInterface booking;
+    private Session session;
 
     Main(BufferedReader input, PrintStream output, Clock clock, Path defaultAvailabilityCsv) {
         this.input = input;
         this.output = output;
+        this.clock = clock;
         this.defaultAvailabilityCsv = defaultAvailabilityCsv;
-        appointments = new AppointmentService(clock);
-        availability = new HealthcareProfessionalSchedule(clock, appointments);
-        booking = new BookingInterface(new AppointmentController(patients, availability, appointments));
     }
 
     public static void main(String[] args) throws IOException {
@@ -50,33 +59,31 @@ public final class Main {
         while (true) {
             output.println("""
 
-                    1. Load clinic locations from CSV
-                    2. Load patients from CSV
-                    3. Load medical services from CSV
-                    4. Import availability from CSV
-                    5. Make availability
-                    6. Search availability
-                    7. Book an appointment
-                    8. Export availability to CSV
+                    1. Import availability from CSV
+                    2. View clinic locations
+                    3. View patients and their appointments
+                    4. Make availability
+                    5. Search availability
+                    6. Book an appointment
+                    7. Export availability to CSV
                     0. Exit""");
             try {
                 switch (prompt("Choice")) {
-                    case "1" -> output.println("Clinic location rows loaded: "
-                            + availability.loadClinicLocations(file("Clinic CSV", Path.of("data/clinic_locations.csv"))));
-                    case "2" -> output.println("Patient rows loaded: "
-                            + patients.loadPatients(file("Patient CSV", Path.of("data/patients.csv"))));
-                    case "3" -> output.println("Medical service rows loaded: "
-                            + appointments.loadMedicalServices(file("Medical service CSV", Path.of("data/medical_services.csv"))));
-                    case "4" -> importAvailability();
-                    case "5" -> makeAvailability();
-                    case "6" -> showSchedules(searchAvailability());
-                    case "7" -> bookAppointment();
-                    case "8" -> output.println("Availability schedules exported: "
-                            + availability.exportAvailability(file("Output CSV")));
+                    case "1" -> importAvailability();
+                    case "2" -> viewClinics();
+                    case "3" -> viewPatientsAndAppointments();
+                    case "4" -> makeAvailability(requireSession().availability);
+                    case "5" -> {
+                        var availability = requireSession().availability;
+                        showSchedules(availability, searchAvailability(availability));
+                    }
+                    case "6" -> bookAppointment(requireSession());
+                    case "7" -> output.println("Availability schedules exported: "
+                            + requireSession().availability.exportAvailability(file("Output CSV")));
                     case "0" -> {
                         return;
                     }
-                    default -> output.println("Choose a number from 0 to 8.");
+                    default -> output.println("Choose a number from 0 to 7.");
                 }
             } catch (EOFException exception) {
                 return;
@@ -88,20 +95,96 @@ public final class Main {
 
     private void importAvailability() throws IOException {
         Path path = file("Availability CSV", defaultAvailabilityCsv);
-        List<ClinicLocation> clinics = availability.clinicLocations();
+        boolean firstImport = session == null;
+        Session target = firstImport ? loadSupportingData() : session;
+        List<ClinicLocation> clinics = target.availability.clinicLocations();
         showClinics(clinics);
         Integer suggestedClinicId = clinics.size() == 1 ? clinics.get(0).locationId() : null;
         String clinicPrompt = suggestedClinicId == null
                 ? "Default clinic ID (blank if the CSV has a Location ID column)"
                 : "Default clinic ID [" + suggestedClinicId + "]";
         String clinicId = prompt(clinicPrompt);
-        int count = availability.importAvailability(path,
+        int count = target.availability.importAvailability(path,
                 clinicId.isEmpty() ? suggestedClinicId : Integer.valueOf(Csv.id(clinicId)));
+        session = target;
+        if (firstImport) {
+            output.printf("Clinic locations: %d | Patients: %d | Medical services: %d%n",
+                    clinics.size(), session.patients.patients().size(), session.appointments.medicalServices().size());
+        }
         output.println("Availability schedules imported: " + count);
     }
 
-    private void makeAvailability() throws IOException {
-        showProfessionals();
+    private Session loadSupportingData() throws IOException {
+        Path clinicCsv = Path.of("data/clinic_locations.csv");
+        Path patientCsv = Path.of("data/patients.csv");
+        Path serviceCsv = Path.of("data/medical_services.csv");
+        String choice = prompt("Supporting CSVs (Enter for sample files, or type custom)");
+        if (choice.equalsIgnoreCase("custom")) {
+            clinicCsv = file("Clinic CSV", clinicCsv);
+            patientCsv = file("Patient CSV", patientCsv);
+            serviceCsv = file("Medical service CSV", serviceCsv);
+        } else if (!choice.isEmpty()) {
+            throw new IllegalArgumentException("Press Enter for samples or type custom");
+        }
+
+        var loaded = new Session(clock);
+        loaded.availability.loadClinicLocations(clinicCsv);
+        loaded.patients.loadPatients(patientCsv);
+        loaded.appointments.loadMedicalServices(serviceCsv);
+        return loaded;
+    }
+
+    private Session requireSession() {
+        if (session == null) {
+            throw new IllegalArgumentException("Import availability with option 1 first");
+        }
+        return session;
+    }
+
+    private void viewClinics() {
+        if (session == null) {
+            output.println("Choose option 1 to load clinic locations with your availability import.");
+            return;
+        }
+        var clinics = session.availability.clinicLocations();
+        if (clinics.isEmpty()) {
+            output.println("No clinic locations found");
+            return;
+        }
+        output.println("Clinic locations:");
+        showClinics(clinics);
+    }
+
+    private void viewPatientsAndAppointments() {
+        if (session == null) {
+            output.println("Choose option 1 to load patients with your availability import.");
+            return;
+        }
+        var patients = session.patients.patients();
+        if (patients.isEmpty()) {
+            output.println("No patients found");
+            return;
+        }
+        output.println("Patients and their appointments:");
+        for (Patient patient : patients) {
+            output.printf("Patient %d | %s %s%n", patient.patientId(), patient.firstName(), patient.lastName());
+            var appointments = session.appointments.appointmentsForPatient(patient.patientId());
+            if (appointments.isEmpty()) {
+                output.println("  No appointments reserved");
+            }
+            for (Appointment appointment : appointments) {
+                output.printf("  Appointment %d | %s | %s %s to %s | %s | %s %s | %s%n",
+                        appointment.appointmentId(), appointment.status(), appointment.startTime().toLocalDate(),
+                        HealthcareProfessionalSchedule.TIME.format(appointment.startTime()),
+                        HealthcareProfessionalSchedule.TIME.format(appointment.endTime()),
+                        appointment.location().name(), appointment.professional().firstName(),
+                        appointment.professional().lastName(), appointment.medicalService().name());
+            }
+        }
+    }
+
+    private void makeAvailability(HealthcareProfessionalSchedule availability) throws IOException {
+        showProfessionals(availability);
         HealthcareProfessional professional = availability.selectProfessional(id("Professional ID"));
         output.println("Professional selected: " + professional.firstName() + " " + professional.lastName());
         showClinics(professional.locations());
@@ -118,7 +201,7 @@ public final class Main {
         var created = availability.makeAvailability(professional.professionalId(), locationId,
                 startDate, endDate, pattern, startTime, endTime);
         output.println("Availability created: " + created.size());
-        showSchedules(created);
+        showSchedules(availability, created);
     }
 
     private RepetitionPattern readWeeklyPattern() throws IOException {
@@ -133,7 +216,7 @@ public final class Main {
         return RepetitionPattern.weekly(days);
     }
 
-    private List<Schedule> searchAvailability() throws IOException {
+    private List<Schedule> searchAvailability(HealthcareProfessionalSchedule availability) throws IOException {
         boolean bySpecialty = switch (prompt("Search by specialty or professional").toLowerCase(Locale.ROOT)) {
             case "specialty" -> true;
             case "professional" -> false;
@@ -143,7 +226,7 @@ public final class Main {
             availability.specialties().forEach(specialty ->
                     output.printf("%d | %s%n", specialty.specialtyId(), specialty.name()));
         } else {
-            showProfessionals();
+            showProfessionals(availability);
         }
         int id = id(bySpecialty ? "Specialty ID" : "Professional ID");
         LocalDate startDate = date("Start date");
@@ -152,28 +235,28 @@ public final class Main {
                 : availability.searchAvailabilityForProfessional(id, startDate, endDate);
     }
 
-    private void bookAppointment() throws IOException {
-        int patientId = booking.identification(prompt("Patient first name"), prompt("Patient last name"),
+    private void bookAppointment(Session current) throws IOException {
+        int patientId = current.booking.identification(prompt("Patient first name"), prompt("Patient last name"),
                 prompt("Insurance number (blank if unavailable)"));
         output.println("Successful identification: patient " + patientId);
-        var schedules = searchAvailability();
+        var schedules = searchAvailability(current.availability);
         if (schedules.isEmpty()) {
             output.println("No date available");
             return;
         }
-        showSchedules(schedules);
+        showSchedules(current.availability, schedules);
         int scheduleId = id("Schedule ID");
         if (schedules.stream().noneMatch(schedule -> schedule.scheduleId() == scheduleId)) {
             throw new IllegalArgumentException("Select a schedule from the search results");
         }
-        appointments.medicalServices().forEach(service ->
+        current.appointments.medicalServices().forEach(service ->
                 output.printf("%d | %s%n", service.serviceId(), service.name()));
-        Appointment confirmed = booking.requestAppointment(scheduleId, id("Service ID"));
+        Appointment confirmed = current.booking.requestAppointment(scheduleId, id("Service ID"));
         output.printf("%s | appointment %d | %s to %s%n",
                 confirmed.status(), confirmed.appointmentId(), confirmed.startTime(), confirmed.endTime());
     }
 
-    private void showSchedules(List<Schedule> schedules) {
+    private void showSchedules(HealthcareProfessionalSchedule availability, List<Schedule> schedules) {
         if (schedules.isEmpty()) {
             output.println("No availability found");
             return;
@@ -190,11 +273,11 @@ public final class Main {
 
     private void showClinics(Iterable<ClinicLocation> locations) {
         for (ClinicLocation location : locations) {
-            output.printf("%d | %s%n", location.locationId(), location.name());
+            output.printf("%d | %s | %s%n", location.locationId(), location.name(), location.address());
         }
     }
 
-    private void showProfessionals() {
+    private void showProfessionals(HealthcareProfessionalSchedule availability) {
         availability.healthcareProfessionals().forEach(professional ->
                 output.printf("%d | %s %s%n", professional.professionalId(),
                         professional.firstName(), professional.lastName()));

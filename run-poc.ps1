@@ -1,6 +1,10 @@
+[CmdletBinding(DefaultParameterSetName = 'Interactive')]
 param(
-    [Parameter(Position = 0)]
-    [string]$AvailabilityCsv
+    [Parameter(Position = 0, ParameterSetName = 'Interactive')]
+    [string]$AvailabilityCsv,
+
+    [Parameter(Mandatory, ParameterSetName = 'Demo')]
+    [switch]$Demo
 )
 
 $ErrorActionPreference = 'Stop'
@@ -19,6 +23,11 @@ if ($AvailabilityCsv) {
 }
 
 $sources = (Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'src') -Filter '*.java' -File -Recurse).FullName
+$entryPoint = 'soen342.Main'
+if ($Demo) {
+    $sources += Join-Path $PSScriptRoot 'tests/soen342/PocDemo.java'
+    $entryPoint = 'soen342.PocDemo'
+}
 $tempRoot = (Get-Item -LiteralPath ([System.IO.Path]::GetTempPath())).FullName.TrimEnd('\', '/')
 $classes = Join-Path $tempRoot ('soen342-poc-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $classes | Out-Null
@@ -28,7 +37,7 @@ try {
     & $compiler.Source --release 17 -encoding UTF-8 -d $classes @sources
     $code = $LASTEXITCODE
     if ($code -eq 0) {
-        & $runtime -cp $classes soen342.Main @pocArguments
+        & $runtime -cp $classes $entryPoint @pocArguments
         $code = $LASTEXITCODE
     }
 } finally {

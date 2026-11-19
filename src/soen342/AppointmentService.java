@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,13 @@ public final class AppointmentService {
         return List.copyOf(services.values());
     }
 
+    public List<Appointment> appointmentsForPatient(int patientId) {
+        return appointments.stream()
+                .filter(appointment -> appointment.patient().patientId() == patientId)
+                .sorted(Comparator.comparing(Appointment::startTime))
+                .toList();
+    }
+
     public boolean isAvailable(Schedule schedule) {
         return appointments.stream().noneMatch(appointment ->
                 appointment.professional().professionalId() == schedule.professionalId()
@@ -64,7 +72,7 @@ public final class AppointmentService {
         int nextId = appointments.size() + 1;
         var request = new AppointmentRequest(nextId, LocalDateTime.now(clock), "Approved", patient);
         var appointment = new Appointment(nextId, schedule.startTime(), schedule.endTime(), "Confirmed",
-                patient, professional, service, request);
+                patient, professional, schedule.location(), service, request);
         appointments.add(appointment);
         return appointment;
     }

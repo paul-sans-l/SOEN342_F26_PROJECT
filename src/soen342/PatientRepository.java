@@ -28,6 +28,10 @@ public final class PatientRepository {
         return rows.size();
     }
 
+    public List<Patient> patients() {
+        return List.copyOf(patients.values());
+    }
+
     public Patient identifyPatient(String firstName, String lastName, String insuranceNumber) {
         var matches = patients.values().stream()
                 .filter(patient -> patient.firstName().equalsIgnoreCase(firstName)
