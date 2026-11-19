@@ -1,0 +1,18 @@
+# Register Patient Arrival (Success)
+
+```mermaid
+sequenceDiagram
+    actor Staff as Administrative Staff
+    participant System
+
+    Note over Staff,System: Search may also use dateOfBirth, phoneNumber, or firstName/lastName
+
+    Staff->>System: searchPatient(insuranceNumber)
+    System-->>Staff: list of patients (patientId, firstName, lastName, dateOfBirth)
+
+    Staff->>System: selectPatient(patientId)
+    System-->>Staff: patient scheduled today (appointmentId, startTime, endTime, status, professional's firstName, lastName)
+
+    Staff->>System: registerArrival(appointmentId)
+    System-->>Staff: arrival confirmed (appointmentId, status = "Arrived")
+```
