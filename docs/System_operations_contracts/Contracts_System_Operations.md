@@ -5,7 +5,7 @@ classDiagram
     class System {
         searchPatient(insuranceNumber)
         selectPatient(patientId)
-        RequestAppointment(StartTime, endTime)
+        requestAppointment(scheduleId, serviceId)
         startConsultation(appointmentId)
         addMedication(medicationId)
         recordClinicalInformation(observations, diagnosis, treatmentRecommendations, followUpRequirements)
@@ -27,12 +27,13 @@ Based on UML Domain Model v1.1.0 and the SSDs for **1. Book Appointment**,**2. C
 
 ## 1. Book Appointment
 
-### System Operation 1: RequestAppointment(startTime, endTime)
+### System Operation 1: requestAppointment(scheduleId, serviceId)
 
 **Preconditions**
-- A `Patient` `p` exists in the system.
-- A `HealthcareProfessional` `hp` exists and has an available `Schedule` for the requested time interval.
-- No other `Appointment` assigned to `hp` overlaps `startTime`–`endTime`.
+- The caller has identified an existing `Patient` `p`.
+- `scheduleId` identifies a `Schedule` `s` for a `HealthcareProfessional` `hp`.
+- `serviceId` identifies a `MedicalService` `ms`.
+- The entire interval of `s` is available, including any resources required by `ms`.
 
 **Postconditions**
 
@@ -45,11 +46,12 @@ Based on UML Domain Model v1.1.0 and the SSDs for **1. Book Appointment**,**2. C
 | `ar` was associated with `p`. | Association formed |
 | An `Appointment` `a` was created. | Instance creation |
 | `a.appointmentId` was set to a new unique value. | Attribute modification |
-| `a.startTime` and `a.endTime` became the given values. | Attribute modification |
+| `a.startTime` and `a.endTime` became the start and end of `s`. | Attribute modification |
 | `a.status` became `"Confirmed"`. | Attribute modification |
 | `a` was associated with `ar`. | Association formed |
 | `a` was associated with `p`. | Association formed |
 | `a` was associated with `hp`. | Association formed |
+| `a` was associated with `ms`. | Association formed |
 
 ---
 

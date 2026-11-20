@@ -1,169 +1,132 @@
 # Appointment Tracking System — Use Case Model
 
-## Abstract
+## Use-case diagram
 
-The use case model for the **Appointment Tracking System** identifies the primary actors who interact with the system and the goals they need to accomplish. It describes the system's required functional behaviour from the users' perspective, without specifying interface design or technical implementation details.
+The four blue use cases are critical. Solid lines connect actors to use cases. Dashed arrows show use-case relationships, with the conditions listed below.
 
-The model groups the system's functionality into **critical** and **non-critical** use cases. Critical use cases represent the core appointment and clinical workflow that the system must support. Non-critical use cases provide supporting administrative, financial, and follow-up functions that improve the completeness of the overall service.
-
-## Actors
-
-### Patient
-
-The **Patient** uses the system to request and manage appointments. A patient may:
-
-- Book an appointment.
-- Reschedule an existing appointment.
-- Cancel an appointment.
-
-### Administrative Staff
-
-**Administrative Staff** support patients and manage the clinic's operational workflow. They may:
-
-- Book appointments on behalf of patients.
-- Register a patient's arrival.
-- Search for a patient record.
-- Reschedule or cancel appointments.
-- Generate invoices.
-- Record payments.
-
-### Healthcare Professional
-
-The **Healthcare Professional** uses the system to carry out clinical activities associated with an appointment. They may:
-
-- Conduct a consultation.
-- Create a referral.
-- Search for a patient record.
-- Issue a prescription.
-- Request a follow-up appointment.
-
-## Critical Use Cases
-
-The following use cases are critical because they represent the central appointment and healthcare-service workflow:
-
-### Book Appointment
-
-A Patient or member of Administrative Staff requests an appointment for a suitable service, date, and time. The system checks availability before the appointment can be confirmed.
-
-### Register Patient Arrival
-
-Administrative Staff record that a patient has arrived for a scheduled appointment. This enables the clinic to track the patient's status and prepare for the consultation.
-
-### Conduct Consultation
-
-A Healthcare Professional conducts and records the consultation associated with the patient's appointment.
-
-### Create Referral
-
-A Healthcare Professional creates a referral when the patient requires another service, specialist, or provider.
-
-### Fully Dressed Critical Use-Case Specifications
-
-The following three critical use cases are documented using a fully dressed format. Each specification contains a main success scenario and at least one failure extension. Corresponding happy-path and failure-path system sequence diagrams should reflect the interactions described in these scenarios.
-
-- [Book Appointment](./Critical_Use_Case/Use_Case_Book_Appointment.md)
-- [Create Referral](./Critical_Use_Case/Use_Case_Create_Referral.md)
-- [Register Patient Arrival](./Critical_Use_Case/Use_Case_Register_Patient_Arrival.md)
-
-## Non-Critical Use Cases
-
-The following use cases support the main workflow but are not essential to every appointment:
-
-### Search Patient
-
-Administrative Staff and Healthcare Professionals locate an existing patient record so that they can perform other authorised tasks.
-
-### Reschedule Appointment
-
-A Patient or member of Administrative Staff changes an existing appointment to another available date or time. The system checks availability before the revised appointment is confirmed.
-
-### Cancel Appointment
-
-A Patient or member of Administrative Staff cancels an existing appointment, making the reserved time available again.
-
-### Issue Prescription
-
-A Healthcare Professional records or issues a prescription following a consultation when medication is required.
-
-### Request Follow-Up Appointment
-
-A Healthcare Professional requests a future appointment when the patient requires continued care or further assessment.
-
-### Generate Invoice
-
-Administrative Staff generate an invoice for applicable services provided to the patient.
-
-### Record Payment
-
-Administrative Staff record a payment made against an invoice or charge.
-
-## Use Case Relationships
-
-### `<<include>>` — Check Availability
-
-The **Book Appointment** and **Reschedule Appointment** use cases both include **Check Availability**. This relationship is represented with `<<include>>` because checking availability is a required, reusable part of both workflows. An appointment cannot be booked or rescheduled successfully unless the requested date and time are available.
-
-- **Book Appointment** `<<include>>` **Check Availability**
-- **Reschedule Appointment** `<<include>>` **Check Availability**
-
-### `<<extend>>` — Validate Referral
-
-The **Validate Referral** use case extends **Book Appointment** when the requested service requires a referral. This is represented with `<<extend>>` because referral validation is conditional rather than part of every booking. If the selected service does not require a referral, the booking process continues without this additional behaviour.
-
-- **Validate Referral** `<<extend>>` **Book Appointment**
-- **Extension condition:** The requested service requires a referral.
-
-
-
----
-> View inside of github and select Code to view the non-converted version or Access VSCode to view the mermaid text for the Use Case Model
-
-## Flow Chart Mermaid Code:
 ```mermaid
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+  flowchart:
+    curve: linear
+---
+
 flowchart LR
+    patient["Patient"]
+    staff["Administrative Staff"]
+    professional["Healthcare Professional"]
 
-    Patient["Patient"]
-    Staff["Administrative Staff"]
-    HCP["Healthcare Professional"]
+    subgraph system["Appointment Tracking System"]
+        subgraph critical["Critical use cases"]
+            book(["Book Appointment"])
+            arrival(["Register Patient Arrival"])
+            consultation(["Conduct Consultation"])
+            referral(["Create Referral"])
+        end
 
-    subgraph ATS["Appointment Tracking System"]
-        Book(["Book Appointment"])
-        Arrival(["Register Patient Arrival"])
-        Consult(["Conduct Consultation"])
-        Referral(["Create Referral"])
-
-        Search(["Search Patient"])
-        Reschedule(["Reschedule Appointment"])
-        Cancel(["Cancel Appointment"])
-        Prescription(["Issue Prescription"])
-        FollowUp(["Request Follow-Up Appointment"])
-        Invoice(["Generate Invoice"])
-        Payment(["Record Payment"])
-
-        Availability(["Check Availability"])
-        Validate(["Validate Referral"])
+        subgraph supporting["Non-critical use cases"]
+            searchAvailability(["Search Availability"])
+            makeAvailability(["Make Availability"])
+            reschedule(["Reschedule Appointment"])
+            cancel(["Cancel Appointment"])
+            checkResources(["Check Resource Availability"])
+            validateReferral(["Validate Referral"])
+            joinWaitlist(["Join Waiting List"])
+            identifyEligible(["Identify Eligible Patients"])
+            offer(["Offer Appointment"])
+            manageWaitlist(["Manage Waiting List"])
+            changePriority(["Update Waiting List Priority"])
+            removeWaitlist(["Remove Patient from Waiting List"])
+            searchPatient(["Search Patient"])
+            prescription(["Issue Prescription"])
+            followUp(["Request Follow-Up Appointment"])
+            invoice(["Generate Invoice"])
+            payment(["Record Payment"])
+        end
     end
 
-    Patient --- Book
-    Patient --- Reschedule
-    Patient --- Cancel
+    patient --- book & searchAvailability & reschedule & cancel & joinWaitlist
+    staff --- book & arrival & searchAvailability & makeAvailability & reschedule & cancel
+    staff --- offer & manageWaitlist & changePriority & removeWaitlist
+    staff --- searchPatient & invoice & payment
+    professional --- consultation & referral & searchPatient & prescription & followUp
 
-    Staff --- Book
-    Staff --- Arrival
-    Staff --- Search
-    Staff --- Reschedule
-    Staff --- Cancel
-    Staff --- Invoice
-    Staff --- Payment
+    book -.->|include| searchAvailability
+    reschedule -.->|include| searchAvailability
+    cancel -.->|include| identifyEligible
+    checkResources -.->|extend| searchAvailability
+    validateReferral -.->|extend| book
+    joinWaitlist -.->|extend| book
+    book -.->|extend| offer
+    removeWaitlist -.->|extend| offer
+    changePriority -.->|extend| manageWaitlist
 
-    HCP --- Consult
-    HCP --- Referral
-    HCP --- Search
-    HCP --- Prescription
-    HCP --- FollowUp
-
-    Book -.->|include| Availability
-    Reschedule -.->|include| Availability
-
-    Validate -.->|extend: service requires referral| Book
+    classDef criticalCase fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:2px;
+    class book,arrival,consultation,referral criticalCase;
 ```
+
+## Critical use cases
+
+| Use case | Actor | Outcome |
+| --- | --- | --- |
+| Book Appointment | Patient, Administrative Staff | The system rechecks the selected slot before confirming the appointment. Staff can book on behalf of a patient at the clinic or over the phone. When the service requires predefined resources, the system checks their availability and allocates them to the confirmed appointment. |
+| Register Patient Arrival | Administrative Staff | Staff record that a patient has arrived for a scheduled appointment. |
+| Conduct Consultation | Healthcare Professional | The professional conducts and records the consultation associated with the appointment. |
+| Create Referral | Healthcare Professional | The professional creates a referral so the patient can receive another service or see an appropriate specialist or provider. |
+
+The fully dressed specifications cover the main success scenarios and their extensions.
+
+- [Book Appointment](./Critical_Use_Case/Use_Case_Book_Appointment.md)
+- [Register Patient Arrival](./Critical_Use_Case/Use_Case_Register_Patient_Arrival.md)
+- [Create Referral](./Critical_Use_Case/Use_Case_Create_Referral.md)
+
+## Non-critical use cases
+
+### Appointments and availability
+
+| Use case | Initiated by | Outcome |
+| --- | --- | --- |
+| Search Availability | Patient, Administrative Staff | View available slots for a professional or specialty within a date range. Booking and rescheduling also use this search. |
+| Make Availability | Administrative Staff | Create availability for a selected professional by choosing a date range, a recurrence pattern such as selected weekdays or monthly, and start and end times. |
+| Reschedule Appointment | Patient, Administrative Staff | Move an appointment after the system verifies that the selected time is available. |
+| Cancel Appointment | Patient, Administrative Staff | Cancel the appointment, free its time slot, and trigger a check for eligible patients on the waiting list. |
+| Check Resource Availability | System | Check whether the required predefined examination rooms, equipment, or supporting roles are available for the selected medical service. Human resources are represented as roles. |
+| Validate Referral | System | Verify the referral when the requested service requires one. |
+
+### Waiting list
+
+| Use case | Initiated by | Outcome |
+| --- | --- | --- |
+| Join Waiting List | Patient | Request placement when no suitable slot is available, using a professional, specialty, or date range as criteria. |
+| Identify Eligible Patients | System | When an appointment is cancelled, find waitlisted patients who match the freed slot and present them in priority order. |
+| Offer Appointment | Administrative Staff | Call an eligible patient to offer the slot based on waitlist priority and record the response. If the patient accepts, continue booking. |
+| Manage Waiting List | Administrative Staff | Review waitlist entries, patient criteria, and contact status. |
+| Update Waiting List Priority | Administrative Staff | Change the priority of a waitlist entry. |
+| Remove Patient from Waiting List | Administrative Staff | Optionally remove a patient after they decline an offer. |
+
+### Patient records, clinical follow-up, and billing
+
+| Use case | Actor | Outcome |
+| --- | --- | --- |
+| Search Patient | Administrative Staff, Healthcare Professional | Find an existing patient record for an authorized task. |
+| Issue Prescription | Healthcare Professional | Record or issue a prescription following a consultation. |
+| Request Follow-Up Appointment | Healthcare Professional | Request a future appointment for continued care or assessment. |
+| Generate Invoice | Administrative Staff | Generate an invoice for applicable services. |
+| Record Payment | Administrative Staff | Record a payment against an invoice or charge. |
+
+## Use-case relationships
+
+| Use case | Relationship | Related use case | Condition |
+| --- | --- | --- | --- |
+| Book Appointment | `«include»` | Search Availability | Part of booking. |
+| Reschedule Appointment | `«include»` | Search Availability | Part of rescheduling. |
+| Cancel Appointment | `«include»` | Identify Eligible Patients | After an appointment slot is freed. |
+| Check Resource Availability | `«extend»` | Search Availability | The selected service requires additional resources. |
+| Validate Referral | `«extend»` | Book Appointment | The requested service requires a referral. |
+| Join Waiting List | `«extend»` | Book Appointment | No suitable slot is available and the patient requests placement. |
+| Book Appointment | `«extend»` | Offer Appointment | The patient accepts the phone offer. |
+| Remove Patient from Waiting List | `«extend»` | Offer Appointment | The patient declines and staff choose to remove the entry. |
+| Update Waiting List Priority | `«extend»` | Manage Waiting List | Staff choose to change an entry's priority. |

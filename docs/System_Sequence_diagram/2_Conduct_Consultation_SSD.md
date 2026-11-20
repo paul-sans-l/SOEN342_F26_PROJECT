@@ -1,3 +1,6 @@
+# Conduct Consultation
+
+```mermaid
 sequenceDiagram
     actor HP as Healthcare Professional
     participant System
@@ -25,3 +28,4 @@ sequenceDiagram
 
     HP->>System: endConsultation()
     System-->>HP: consultation completed (consultationId, appointment status = "Completed")
+```
