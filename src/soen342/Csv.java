@@ -18,7 +18,7 @@ final class Csv {
         try (var reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             String firstLine = reader.readLine();
             if (firstLine == null) {
-                throw new IllegalArgumentException("CSV file is empty");
+                throw new IllegalArgumentException("The selected CSV file is empty. Choose a CSV with a header row.");
             }
             if (firstLine.startsWith("\uFEFF")) {
                 firstLine = firstLine.substring(1);
@@ -34,7 +34,8 @@ final class Csv {
                 }
                 var fields = parse(line, lineNumber);
                 if (fields.size() != header.size()) {
-                    throw new IllegalArgumentException("Wrong number of fields on CSV line " + lineNumber);
+                    throw new IllegalArgumentException("CSV line " + lineNumber + " has " + fields.size()
+                            + " fields; expected " + header.size() + " to match the header.");
                 }
                 rows.add(fields);
             }
@@ -45,7 +46,8 @@ final class Csv {
     static List<List<String>> read(Path file, List<String> expectedHeader) throws IOException {
         Table table = read(file);
         if (!table.header().equals(expectedHeader)) {
-            throw new IllegalArgumentException("Expected CSV header: " + String.join(",", expectedHeader));
+            throw new IllegalArgumentException("CSV columns do not match the required header: "
+                    + String.join(",", expectedHeader));
         }
         return table.rows();
     }
@@ -81,21 +83,27 @@ final class Csv {
     static <T> void putRecord(java.util.Map<Integer, T> records, int id, T record) {
         T existing = records.putIfAbsent(id, record);
         if (existing != null && !existing.equals(record)) {
-            throw new IllegalArgumentException("Conflicting CSV record for ID " + id);
+            throw new IllegalArgumentException("CSV ID " + id
+                    + " is used for different records. Each ID must identify only one record.");
         }
     }
 
     static int id(String field) {
-        int id = Integer.parseInt(field);
+        int id;
+        try {
+            id = Integer.parseInt(field);
+        } catch (NumberFormatException exception) {
+            throw new NumberFormatException("Enter a positive whole number for an ID.");
+        }
         if (id < 1) {
-            throw new IllegalArgumentException("IDs must be positive integers");
+            throw new IllegalArgumentException("Enter a positive whole number for an ID.");
         }
         return id;
     }
 
     static String required(String field, String label) {
         if (field.isBlank()) {
-            throw new IllegalArgumentException(label + " is required");
+            throw new IllegalArgumentException("Enter a value for " + label + ".");
         }
         return field;
     }
@@ -124,13 +132,15 @@ final class Csv {
             } else if (character == '"' && field.isEmpty() && !closedQuote) {
                 quoted = true;
             } else if (character == '"' || closedQuote) {
-                throw new IllegalArgumentException("Invalid quoting on CSV line " + lineNumber);
+                throw new IllegalArgumentException("CSV line " + lineNumber
+                        + " has invalid quotation marks. Check the field's opening and closing quotes.");
             } else {
                 field.append(character);
             }
         }
         if (quoted) {
-            throw new IllegalArgumentException("Unclosed quoted field on CSV line " + lineNumber);
+            throw new IllegalArgumentException("CSV line " + lineNumber
+                    + " has an opening quotation mark without a matching closing mark.");
         }
         fields.add(field.toString().strip());
         return fields;

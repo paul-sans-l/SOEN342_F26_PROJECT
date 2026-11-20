@@ -40,10 +40,12 @@ public final class PatientRepository {
                         || patient.insuranceNumber().equalsIgnoreCase(insuranceNumber))
                 .toList();
         if (matches.isEmpty()) {
-            throw new IllegalArgumentException("patient not found");
+            throw new IllegalArgumentException(
+                    "No patient matched that name and insurance number. Check the details and try again.");
         }
         if (matches.size() > 1) {
-            throw new IllegalArgumentException("more than one patient matches; provide the insurance number");
+            throw new IllegalArgumentException(
+                    "More than one patient has that name. Enter the patient's insurance number to identify them.");
         }
         return matches.get(0);
     }
@@ -51,7 +53,7 @@ public final class PatientRepository {
     public Patient identifyPatient(int patientId) {
         Patient patient = patients.get(patientId);
         if (patient == null) {
-            throw new IllegalArgumentException("patient not found");
+            throw new IllegalArgumentException("Patient ID not found. Choose an ID from the loaded patient list.");
         }
         return patient;
     }

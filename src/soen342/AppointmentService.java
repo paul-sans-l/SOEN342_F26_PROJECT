@@ -30,7 +30,8 @@ public final class AppointmentService {
             String requiresResources = row.get(3);
             if (!requiresResources.equalsIgnoreCase("true")
                     && !requiresResources.equalsIgnoreCase("false")) {
-                throw new IllegalArgumentException("Requires Resources must be true or false");
+                throw new IllegalArgumentException(
+                        "The Requires Resources value in the medical services CSV must be true or false.");
             }
             Csv.putRecord(updated, id, new MedicalService(id, Csv.required(row.get(1), "Service name"),
                     row.get(2), Boolean.parseBoolean(requiresResources)));
@@ -59,14 +60,16 @@ public final class AppointmentService {
     public Appointment createAppointment(Patient patient, Schedule schedule,
                                          HealthcareProfessional professional, int serviceId) {
         if (schedule.startTime().isBefore(LocalDateTime.now(clock)) || !isAvailable(schedule)) {
-            throw new IllegalArgumentException("date not available");
+            throw new IllegalArgumentException(
+                    "That appointment time is in the past or already booked. Search again and choose an available time.");
         }
         MedicalService service = services.get(serviceId);
         if (service == null) {
-            throw new IllegalArgumentException("medical service not found");
+            throw new IllegalArgumentException("Medical service ID not found. Choose an ID from the services listed.");
         }
         if (service.requiresResources()) {
-            throw new IllegalArgumentException("required resource unavailable");
+            throw new IllegalArgumentException(
+                    "This service cannot be booked because its required resources are not available.");
         }
 
         int nextId = appointments.size() + 1;

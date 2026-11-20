@@ -148,7 +148,7 @@ public final class HealthcareProfessionalSchedule {
     public HealthcareProfessional selectProfessional(int professionalId) {
         HealthcareProfessional professional = professionals.get(professionalId);
         if (professional == null) {
-            throw new IllegalArgumentException("professional not found");
+            throw new IllegalArgumentException("Professional ID not found. Choose an ID from the professionals listed.");
         }
         return professional;
     }
@@ -159,10 +159,11 @@ public final class HealthcareProfessionalSchedule {
         HealthcareProfessional professional = selectProfessional(professionalId);
         ClinicLocation location = locations.get(locationId);
         if (location == null || !professional.locations().contains(location)) {
-            throw new IllegalArgumentException("professional not assigned to this location");
+            throw new IllegalArgumentException(
+                    "This professional is not assigned to that clinic. Choose a clinic listed for the professional.");
         }
         if (endDate.isBefore(startDate)) {
-            throw new IllegalArgumentException("invalid date or time range");
+            throw new IllegalArgumentException("End date must be the same as or later than the start date.");
         }
         validateTimes(startTime, endTime);
 
@@ -182,7 +183,8 @@ public final class HealthcareProfessionalSchedule {
             }
         }
         if (created.isEmpty()) {
-            throw new IllegalArgumentException("no date matches the repetition pattern");
+            throw new IllegalArgumentException("No dates from " + startDate + " through " + endDate
+                    + " match the selected recurrence. Extend the date range or change the recurrence settings.");
         }
         created.forEach(schedule -> schedules.put(schedule.scheduleId(), schedule));
         return List.copyOf(created);
@@ -191,7 +193,7 @@ public final class HealthcareProfessionalSchedule {
     public List<Schedule> searchAvailability(int specialtyId, LocalDate startDate, LocalDate endDate) {
         Specialty specialty = specialties.get(specialtyId);
         if (specialty == null) {
-            throw new IllegalArgumentException("specialty or professional not found");
+            throw new IllegalArgumentException("Specialty ID not found. Choose an ID from the specialties listed.");
         }
         return findAvailable(professional -> professional.specialties().contains(specialty), startDate, endDate);
     }
@@ -199,7 +201,7 @@ public final class HealthcareProfessionalSchedule {
     public List<Schedule> searchAvailabilityForProfessional(
             int professionalId, LocalDate startDate, LocalDate endDate) {
         if (!professionals.containsKey(professionalId)) {
-            throw new IllegalArgumentException("specialty or professional not found");
+            throw new IllegalArgumentException("Professional ID not found. Choose an ID from the professionals listed.");
         }
         return findAvailable(professional -> professional.professionalId() == professionalId, startDate, endDate);
     }
@@ -207,7 +209,7 @@ public final class HealthcareProfessionalSchedule {
     Schedule scheduleForBooking(int scheduleId) {
         Schedule schedule = schedules.get(scheduleId);
         if (schedule == null) {
-            throw new IllegalArgumentException("date not available");
+            throw new IllegalArgumentException("Schedule ID not found. Search availability and choose a listed schedule.");
         }
         return schedule;
     }
@@ -215,8 +217,12 @@ public final class HealthcareProfessionalSchedule {
     private List<Schedule> findAvailable(Predicate<HealthcareProfessional> matches,
                                          LocalDate startDate, LocalDate endDate) {
         LocalDateTime now = LocalDateTime.now(clock);
-        if (endDate.isBefore(startDate) || startDate.isBefore(now.toLocalDate())) {
-            throw new IllegalArgumentException("invalid date range");
+        if (endDate.isBefore(startDate)) {
+            throw new IllegalArgumentException("End date must be the same as or later than the start date.");
+        }
+        if (startDate.isBefore(now.toLocalDate())) {
+            throw new IllegalArgumentException("Start date must be today or a future date. Enter a date on or after "
+                    + now.toLocalDate() + ".");
         }
         return schedules.values().stream()
                 .filter(schedule -> matches.test(professionals.get(schedule.professionalId())))
@@ -231,14 +237,15 @@ public final class HealthcareProfessionalSchedule {
     private ClinicLocation requireLocation(Integer locationId) {
         ClinicLocation location = locations.get(locationId);
         if (location == null) {
-            throw new IllegalArgumentException("Select a clinic location loaded from CSV");
+            throw new IllegalArgumentException(
+                    "Clinic ID not found. Import clinic locations and choose an ID from the list.");
         }
         return location;
     }
 
     private static void validateTimes(LocalTime start, LocalTime end) {
         if (!end.isAfter(start)) {
-            throw new IllegalArgumentException("invalid date or time range");
+            throw new IllegalArgumentException("End time must be later than start time.");
         }
     }
 

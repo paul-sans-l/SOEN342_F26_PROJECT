@@ -16,7 +16,7 @@ public final class BookingInterface {
 
     public Appointment requestAppointment(int scheduleId, int serviceId) {
         if (identifiedPatientId == null) {
-            throw new IllegalArgumentException("Identify the patient before booking");
+            throw new IllegalArgumentException("Identify the patient before requesting an appointment.");
         }
         return controller.requestAppointment(identifiedPatientId, scheduleId, serviceId);
     }

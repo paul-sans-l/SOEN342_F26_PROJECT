@@ -124,7 +124,8 @@ public final class Main {
             patientCsv = file("Patient CSV", patientCsv);
             serviceCsv = file("Medical service CSV", serviceCsv);
         } else if (!choice.isEmpty()) {
-            throw new IllegalArgumentException("Press Enter for samples or type custom");
+            throw new IllegalArgumentException(
+                    "For supporting CSVs, press Enter to use the sample files or type custom to choose files.");
         }
 
         var loaded = new Session(clock);
@@ -136,7 +137,7 @@ public final class Main {
 
     private Session requireSession() {
         if (session == null) {
-            throw new IllegalArgumentException("Import availability with option 1 first");
+            throw new IllegalArgumentException("No data is loaded yet. Choose option 1 to import availability first.");
         }
         return session;
     }
@@ -194,7 +195,8 @@ public final class Main {
         RepetitionPattern pattern = switch (prompt("Recurrence (weekly/monthly)").toLowerCase(Locale.ROOT)) {
             case "weekly" -> readWeeklyPattern();
             case "monthly" -> RepetitionPattern.monthly(id("Day of the month (1-31)"));
-            default -> throw new IllegalArgumentException("Select weekly or monthly");
+            default -> throw new IllegalArgumentException(
+                    "Enter weekly or monthly for the recurrence.");
         };
         LocalTime startTime = time("Start time");
         LocalTime endTime = time("End time");
@@ -210,7 +212,8 @@ public final class Main {
             try {
                 days.add(DayOfWeek.valueOf(day.strip().toUpperCase(Locale.ROOT)));
             } catch (IllegalArgumentException exception) {
-                throw new IllegalArgumentException("Enter full day names separated by commas");
+                throw new IllegalArgumentException(
+                        "Enter full weekday names separated by commas, such as MONDAY,WEDNESDAY.");
             }
         }
         return RepetitionPattern.weekly(days);
@@ -220,7 +223,8 @@ public final class Main {
         boolean bySpecialty = switch (prompt("Search by specialty or professional").toLowerCase(Locale.ROOT)) {
             case "specialty" -> true;
             case "professional" -> false;
-            default -> throw new IllegalArgumentException("Select specialty or professional");
+            default -> throw new IllegalArgumentException(
+                    "Enter specialty to search by specialty, or professional to search by professional.");
         };
         if (bySpecialty) {
             availability.specialties().forEach(specialty ->
@@ -247,7 +251,8 @@ public final class Main {
         showSchedules(current.availability, schedules);
         int scheduleId = id("Schedule ID");
         if (schedules.stream().noneMatch(schedule -> schedule.scheduleId() == scheduleId)) {
-            throw new IllegalArgumentException("Select a schedule from the search results");
+            throw new IllegalArgumentException(
+                    "That schedule ID is not in the search results. Enter one of the schedule IDs listed above.");
         }
         current.appointments.medicalServices().forEach(service ->
                 output.printf("%d | %s%n", service.serviceId(), service.name()));
@@ -294,7 +299,12 @@ public final class Main {
     }
 
     private int id(String label) throws IOException {
-        return Csv.id(prompt(label));
+        String value = prompt(label);
+        try {
+            return Csv.id(value);
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException(label + " must be a positive whole number.");
+        }
     }
 
     private Path file(String label) throws IOException {
@@ -307,10 +317,20 @@ public final class Main {
     }
 
     private LocalDate date(String label) throws IOException {
-        return LocalDate.parse(prompt(label + " (YYYY-MM-DD)"));
+        String value = prompt(label + " (YYYY-MM-DD)");
+        try {
+            return LocalDate.parse(value);
+        } catch (DateTimeException exception) {
+            throw new IllegalArgumentException(label + " must be a valid date in YYYY-MM-DD format.");
+        }
     }
 
     private LocalTime time(String label) throws IOException {
-        return LocalTime.parse(prompt(label + " (HH:mm)"), HealthcareProfessionalSchedule.TIME);
+        String value = prompt(label + " (HH:mm)");
+        try {
+            return LocalTime.parse(value, HealthcareProfessionalSchedule.TIME);
+        } catch (DateTimeException exception) {
+            throw new IllegalArgumentException(label + " must be a valid time in 24-hour HH:mm format.");
+        }
     }
 }
