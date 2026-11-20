@@ -1,60 +1,76 @@
 # UML Interaction Diagram: Book Appointment
 
-This design-level sequence diagram realizes the **RequestAppointment** system operation defined by the SSD `1_Book_Appointment_SSD` and the operation contracts. `BookingInterface` is the boundary object and `AppointmentController` coordinates the interaction. All remaining participants are concepts from the UML domain model (v2.0.0).
+The [booking SSD](../System_Sequence_diagram/1_Book_Appointment_SSD.md) shows the actor's requests and responses. This interaction shows how the PoC identifies a patient, searches availability, and confirms an appointment for the entire selected schedule.
 
 ```mermaid
 sequenceDiagram
-    actor Patient as Patient
-    actor Staff as Administrative Staff
-    participant UI as bookingUI:BookingInterface
+    actor User as Patient or Administrative Staff
+    participant Console as Console
+    participant UI as booking:BookingInterface
     participant Controller as appointmentController:AppointmentController
-    participant PatientRecord as patient:Patient
-    participant Professional as professional:HealthcareProfessional
-    participant Schedule as schedule:Schedule
-    participant AppointmentRequest as appointmentRequest:AppointmentRequest
+    participant Patients as patients:PatientRepository
+    participant Availability as availability:HealthcareProfessionalSchedule
+    participant Appointments as appointments:AppointmentService
+    participant Request as request:AppointmentRequest
     participant Appointment as appointment:Appointment
-    participant ResourceService as resourceService:ResourceService
-    participant WaitingList as waitingList:WaitingListService
 
-    alt Patient books directly
-        Patient->>UI: requestAppointment(startTime, endTime)
-    else Staff books on behalf of patient
-        Staff->>UI: requestAppointmentForPatient(patientId, startTime, endTime)
-    end
-    UI->>Controller: requestAppointment(patientId, startTime, endTime)
-    Controller->>PatientRecord: identify(patientId)
-    PatientRecord-->>Controller: Patient
+    User->>Console: identification(firstName, lastName, insuranceNumber)
+    Console->>UI: identification(firstName, lastName, insuranceNumber)
+    UI->>Controller: identifyPatient(firstName, lastName, insuranceNumber)
+    Controller->>Patients: identifyPatient(firstName, lastName, insuranceNumber)
 
-    Controller->>Professional: identify(professionalId)
-    Professional-->>Controller: HealthcareProfessional
-    Controller->>Schedule: getAvailableSlots(startTime, endTime)
-    Schedule-->>Controller: availabilityStatus
+    alt Patient found
+        Patients-->>Controller: Patient
+        Controller-->>UI: patientId
+        UI-->>Console: patientId
+        Console-->>User: successful identification (patientId)
+        User->>Console: searchAvailability(specialtyId, startDate, endDate)
+        Console->>Availability: searchAvailability(specialtyId, startDate, endDate)
 
-    alt Appointment available
-        Controller->>ResourceService: checkRequiredResources(startTime, endTime)
-        ResourceService-->>Controller: resourceAvailability
+        alt No dates available
+            Availability-->>Console: empty list
+            Console-->>User: no date available
+        else Dates available
+            Availability-->>Console: available schedules and their IDs
+            Console-->>User: available dates, professionals, and locations
+            User->>Console: requestAppointment(scheduleId, serviceId)
+            Console->>UI: requestAppointment(scheduleId, serviceId)
+            UI->>Controller: requestAppointment(patientId, scheduleId, serviceId)
+            Controller->>Patients: identifyPatient(patientId)
+            Patients-->>Controller: Patient
+            Controller->>Availability: scheduleForBooking(scheduleId)
+            Availability-->>Controller: Schedule
+            Controller->>Availability: selectProfessional(schedule.professionalId)
+            Availability-->>Controller: HealthcareProfessional
+            Controller->>Appointments: createAppointment(patient, schedule, professional, serviceId)
+            Appointments->>Appointments: recheck availability and selected service
 
-        opt Resources available
-            Controller->>AppointmentRequest: create(Patient, professional, startTime, endTime)
-            Note over AppointmentRequest: requestId is generated and status = "Approved"
-            AppointmentRequest-->>Controller: requestId
-            Controller->>Appointment: create(Patient, professional, AppointmentRequest, startTime, endTime)
-            Note over Appointment: appointmentId is generated and status = "Confirmed"
-            Appointment-->>Controller: appointmentId
-            Controller-->>UI: appointment confirmed
-            UI-->>Patient: appointmentId, startTime, endTime, status = "Confirmed"
-            UI-->>Staff: appointmentId, patient, startTime, endTime, status = "Confirmed"
+            alt Date no longer available
+                Appointments-->>Controller: date not available
+                Controller-->>UI: date not available
+                UI-->>Console: date not available
+                Console-->>User: date not available
+            else Required resource unavailable
+                Appointments-->>Controller: required resource unavailable
+                Controller-->>UI: required resource unavailable
+                UI-->>Console: required resource unavailable
+                Console-->>User: required resource unavailable
+            else Appointment and required resources available
+                Appointments->>Request: create approved request for patient
+                Request-->>Appointments: AppointmentRequest
+                Appointments->>Appointment: create confirmed appointment for the full schedule interval
+                Appointment-->>Appointments: Appointment
+                Appointments-->>Controller: Appointment
+                Controller-->>UI: Appointment
+                UI-->>Console: Appointment
+                Console-->>User: confirmed (appointmentId, startTime, endTime, status)
+            end
         end
-    else Appointment unavailable
-        Controller-->>UI: date not available
-        UI-->>Patient: date not available
-        UI-->>Staff: date not available
-        opt Patient joins waiting list
-            Controller->>WaitingList: registerOnWaitlist(Patient, criteria)
-            WaitingList-->>Controller: waiting-list confirmation
-            Controller-->>UI: waiting-list confirmation
-            UI-->>Patient: waiting-list confirmation
-        end
+    else Patient could not be identified
+        Patients-->>Controller: identification error
+        Controller-->>UI: identification error
+        UI-->>Console: identification error
+        Console-->>User: identification error
     end
 ```
 
@@ -62,26 +78,8 @@ sequenceDiagram
 
 | System operation | Design realization | Domain-model support |
 |---|---|---|
-| `RequestAppointment(startTime, endTime)` | The controller identifies the patient and healthcare professional, checks the professional's schedule, and creates an approved appointment request and confirmed appointment when the slot is available. | `Patient` requests `AppointmentRequest`; `HealthcareProfessional` is assigned to `Appointment`; `Schedule` provides availability; `AppointmentRequest` results in `Appointment`. |
-| `requestAppointmentForPatient(patientId, startTime, endTime)` | Administrative Staff submits the booking through the interface on behalf of the patient. | `AdministrativeStaff` may submit an `AppointmentRequest` on behalf of a `Patient`. |
+| `identification(firstName, lastName, insuranceNumber)` | `BookingInterface` keeps the ID returned by `PatientRepository` for the next booking request. | `Patient` holds the lookup fields and its unique `patientId`. |
+| `searchAvailability(specialtyId, startDate, endDate)` | `HealthcareProfessionalSchedule` returns bookable schedules. Direct search can also filter by professional. | A `HealthcareProfessional` has specialties and schedules. Each schedule is hosted at a clinic location. |
+| `requestAppointment(scheduleId, serviceId)` | `AppointmentController` resolves the patient, schedule, and professional. `AppointmentService` rechecks the interval and selects the medical service by ID. | `AppointmentRequest` belongs to a patient and results in an `Appointment` for the patient, professional, and medical service. |
 
-## Operation Contract Realized: `RequestAppointment(startTime, endTime)`
-
-| Postcondition | Type | Realized by |
-|---|---|---|
-| An `AppointmentRequest` `ar` was created. | Instance creation | `create(Patient, professional, startTime, endTime)` |
-| `ar.requestId` was set to a new unique value. | Attribute modification | `AppointmentRequest` constructor |
-| `ar.requestedAt` became the current date and time. | Attribute modification | `AppointmentRequest` constructor |
-| `ar.status` became `"Approved"`. | Attribute modification | `AppointmentRequest` constructor |
-| `ar` was associated with `Patient`. | Association formed | `create(Patient, professional, startTime, endTime)` |
-| An `Appointment` `a` was created. | Instance creation | `create(Patient, professional, AppointmentRequest, startTime, endTime)` |
-| `a.appointmentId` was set to a new unique value. | Attribute modification | `Appointment` constructor |
-| `a.startTime` and `a.endTime` became the given values. | Attribute modification | `Appointment` constructor |
-| `a.status` became `"Confirmed"`. | Attribute modification | `Appointment` constructor |
-| `a` was associated with `ar`. | Association formed | `AppointmentRequest` parameter of `create` |
-| `a` was associated with `Patient`. | Association formed | `Patient` parameter of `create` |
-| `a` was associated with `HealthcareProfessional`. | Association formed | `HealthcareProfessional` parameter of `create` |
-
-## Scope Boundary
-
-Resource availability and waiting-list registration are shown only as optional booking alternatives. The base appointment operation creates the appointment only when the professional, time slot, and required resources are available. Waiting-list and resource-allocation details are not additional postconditions of `RequestAppointment`.
+The [booking operation contract](../System_operations_contracts/Contracts_System_Operations.md#system-operation-1-requestappointmentscheduleid-serviceid) defines the approved request and confirmed appointment. The [join-waitlist SSD](../System_Sequence_diagram/8_Join_Waitlist_SSD.md) documents the wider waitlist flow. The PoC reports unavailable slots and uses a demo service with no additional resource requirements.

@@ -2,20 +2,30 @@
 
 ```mermaid
 sequenceDiagram
-    actor Patient_or_staff as Patient or Staff
+    actor PatientOrStaff as Patient or Staff
     participant System
 
-    
-    Patient_or_staff->>System: Identification(First_Name,Last_Name,Insurance_Number)
-    System -->> Patient_or_staff: Successful Indentifictation
-    Patient_or_staff->>System: RequestAppointment()
-    System ->> Patient_or_staff: ShowDateAvailable()
-    Patient_or_staff->>System: RequestAppointment(StartTime, EndTime)
+    PatientOrStaff->>System: identification(firstName, lastName, insuranceNumber)
+    System-->>PatientOrStaff: successful identification (patientId)
+    PatientOrStaff->>System: searchAvailability(specialtyId, startDate, endDate)
 
-    alt Appointment available
-        System->>System: CreateAppointment(StartTime, EndTime)
-        System-->>Patient_or_staff: Confirmed
-    else Appointment unavailable
-        System-->>Patient_or_staff: Date not Available
+    alt Dates available
+        System-->>PatientOrStaff: available dates (scheduleId, startTime, endTime, professional's firstName, lastName)
+        PatientOrStaff->>System: requestAppointment(scheduleId, serviceId)
+
+        alt Appointment available and required resources available
+            System-->>PatientOrStaff: confirmed (appointmentId, startTime, endTime, status = "Confirmed")
+        else Required resource unavailable
+            System-->>PatientOrStaff: error: required resource unavailable
+        else Date no longer available
+            System-->>PatientOrStaff: date not available
+        end
+    else No date available
+        System-->>PatientOrStaff: no date available
+
+        opt Patient joins the waiting list
+            PatientOrStaff->>System: joinWaitingList(specialtyId, startDate, endDate)
+            System-->>PatientOrStaff: waitlist entry created (waitlistEntryId, priority, status = "Waiting")
+        end
     end
 ```
