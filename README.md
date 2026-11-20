@@ -40,7 +40,7 @@ To suggest a different file for **Import availability**, pass its path when laun
 .\run-poc.ps1 -Demo
 ```
 
-The demo starts with empty in-memory data and prints the whole console session. It uses November 1, 2026 in Toronto as a fixed test date so the handout's November availability can be searched and booked. The menu repeats after each action. Follow each `Choice:` line to see what runs next. A blank answer accepts the default shown in brackets.
+The demo starts with empty in-memory data, imports fictional patients and professionals from the [demo CSVs](./data/demo/), and prints the whole console session. It uses November 1, 2026 in Toronto as a fixed test date so the sample availability can be searched and booked. The menu repeats after each action. Follow each `Choice:` line to see what runs next. A blank answer accepts the default shown in brackets.
 
 ### What the demo output means
 
@@ -48,18 +48,16 @@ Options **1, 4, 5, 6, and 7** cover the five PoC requirements. Options **2 and 3
 
 | What you see | What happened |
 | --- | --- |
-| **Choice 1 — Import availability** | The demo accepts the handout CSV and the sample supporting files. It loads **1 clinic, 4 patients, and 1 medical service**, then imports **8 schedule intervals** into Demo Clinic. The availability CSV also supplies the professionals and specialties. |
+| **Choice 1 — Import availability** | The demo loads **1 clinic, 8 patients, and 1 medical service**, then imports **10 schedule intervals** for **7 healthcare professionals** at Demo Clinic. The availability CSV supplies the professionals and their specialties. |
 | **Choice 2 — View clinic locations** | `1 \| Demo Clinic \| 1 Demo Avenue` shows the clinic's ID, name, and address. The demo uses clinic ID `1` when creating availability. |
-| **Choice 3 — View patients and their appointments** | The four patients are loaded. Each shows `No appointments reserved` because no booking has been made in this run yet. |
-| **Choice 4 — Make availability** | The demo selects **Amélie Tremblay** at Demo Clinic and asks for Mondays from **09:00 to 12:00** between November 9 and 16. Both Mondays match, so the system creates **schedule `9` on November 9** and **schedule `10` on November 16**. |
-| **Choice 5 — Search availability** | The demo searches **Family Medicine** from November 2 through 16. It finds four free intervals, with `1` and `2` from the imported CSV and `9` and `10` from the recurring availability. The `T` in `2026-11-09T09:00` separates the date from the time. |
-| **Choice 6 — Book an appointment** | The app identifies **Émilie Lavoie** as patient `1` and books schedule `9` for service `1`, **General Consultation**. `Confirmed \| appointment 1` means the entire **09:00–12:00** interval is reserved. Schedule `9` identifies the time slot. Appointment `1` identifies the booking. |
-| **Choice 3 again — Check the reservation** | Émilie now has a confirmed appointment showing the **date, time, clinic, professional, and service**. The other three patients still have no reservations. |
-| **Choice 7 — Export availability** | The app writes **10 schedule rows** to a temporary CSV, including the 8 imported rows and the 2 it created. The path appears on the `Demo export` line at the end. The export includes all stored schedule intervals. Appointment status stays in memory for the current run. |
-| **Choice 5 again — Check the booked slot** | The demo searches for Amélie on **November 9 only**. `No availability found` is expected because her only interval on that date is booked. |
+| **Choice 3 — View patients and their appointments** | The list shows eight patients, from `Patient 1 \| Emily Walker` to `Patient 8 \| Emma Wilson`. Each shows `No appointments reserved`. |
+| **Choice 4 — Make availability** | The demo selects **Grace Miller** at Demo Clinic and asks for Mondays from **09:00 to 12:00** between November 9 and 16. Both Mondays match, so the system creates **schedule `11` on November 9** and **schedule `12` on November 16**. |
+| **Choice 5 — Search availability** | The demo searches **Family Medicine** from November 2 through 16. It finds four free intervals for Grace Miller, with `1` and `2` from the imported CSV and `11` and `12` from the recurring availability. The `T` in `2026-11-09T09:00` separates the date from the time. |
+| **Choice 6 — Book an appointment** | The app identifies **Emily Walker** as patient `1` and books schedule `11` for service `1`, **General Consultation**. `Confirmed \| appointment 1` means the entire **09:00–12:00** interval is reserved. Schedule `11` identifies the time slot. Appointment `1` identifies the booking. |
+| **Choice 3 again — Check the reservation** | Emily's confirmed General Consultation appears under her name for **November 9, 09:00 to 12:00, at Demo Clinic with Grace Miller**. The other seven patients still have no reservations. |
+| **Choice 7 — Export availability** | The app writes **12 schedule rows** to a temporary CSV, including the 10 imported rows and the 2 it created. The path appears on the `Demo export` line at the end. The export includes all stored schedule intervals. Appointment status stays in memory for the current run. |
+| **Choice 5 again — Check the booked slot** | The demo searches for Grace Miller on **November 9 only**. `No availability found` is expected because her only interval on that date is booked. |
 | **Choice 0 — Exit** | `PASS` means all seven choices produced the expected results, the appointment appeared under the right patient, the booked slot disappeared from search, and the export contained the expected rows. |
-
-Some Windows terminals may display accented names incorrectly when decoding the console output. The exported CSV uses UTF-8 and preserves the names.
 
 ### Use the interactive menu
 
@@ -78,7 +76,10 @@ The Phase II additions in `src/` and `data/` run the PoC. The documents in `docs
 │   ├── clinic_locations.csv                         # Demo clinic and location ID
 │   ├── medical_services.csv                         # Demo service and resource requirement flag
 │   ├── patients.csv                                 # Example patients for identification
-│   └── professional_availability.csv                # Availability rows from the handout
+│   ├── professional_availability.csv                # Availability rows from the handout
+│   └── demo/                                        # Fictional data for the automated walkthrough
+│       ├── patients.csv                             # Eight fictional patients
+│       └── professional_availability.csv            # Ten intervals for seven fictional professionals
 ├── docs/
 │   ├── System_Sequence_diagram/                     # Actor requests, responses, and alternate flows
 │   ├── System_operations_contracts/
