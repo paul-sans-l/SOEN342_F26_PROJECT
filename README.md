@@ -15,7 +15,7 @@ Phase II extends the appointment-tracking design with waitlists and resource req
 | [UML domain model](./docs/UML_Domain_Model/UML_Domain_model.md#iteration-ii-domain-model) | Iteration II adds waitlist entries, appointment offers, and the distinction between resources required by a medical service and resources allocated to an appointment. |
 | [System sequence diagrams](./docs/System_Sequence_diagram/) | All ten SSDs now have editable Mermaid Markdown. The booking SSD uses `scheduleId` and `serviceId`. The consultation SSD shows a confirmed follow-up appointment, and its outdated PNG was removed. |
 | [UML interaction diagrams](./docs/UML_Interactions_diagram/) | Design-level interactions cover Book Appointment, Conduct Consultation, and Create Referral. The booking interaction and [operation contract](./docs/System_operations_contracts/Contracts_System_Operations.md#1-book-appointment) use the identified patient and the full interval of the selected schedule. |
-| [Partial UML class diagram](https://github.com/paul-sans-l/SOEN342_F26_PROJECT/pull/29) | The class diagram is tracked separately in PR #29. It presents domain associations and design dependencies as two views of the same model. |
+| [Partial UML class diagram](./docs/UML_Class_Diagram/UML_Class_Diagram.md) | The class diagram presents domain associations and design dependencies as two views of the same model. |
 | [Java PoC](./src/soen342/) and [sample data](./data/) | The console runs the five required operations in one in-memory workflow. It imports availability, creates recurring intervals, searches for free schedules, books a selected interval, and exports availability to CSV. Separate CSVs supply clinics, patients, and services. |
 
 The use-case model includes staff changes to waitlist priority. The corresponding SSD is still pending.
@@ -84,6 +84,8 @@ The Phase II additions in `src/` and `data/` run the PoC. The documents in `docs
 │   ├── System_Sequence_diagram/                     # Actor requests, responses, and alternate flows
 │   ├── System_operations_contracts/
 │   │   └── Contracts_System_Operations.md           # Preconditions and results of system operations
+│   ├── UML_Class_Diagram/
+│   │   └── UML_Class_Diagram.md                      # Partial design classes and dependencies
 │   ├── UML_Domain_Model/
 │   │   └── UML_Domain_model.md                      # Iteration I and II entities and relationships
 │   ├── UML_Interactions_diagram/                    # How objects carry out the system operations
